@@ -161,7 +161,7 @@ md"#### Signal fréquentiel"
 
 # ╔═╡ bb5eebce-e385-4c4f-b827-0ffcdead0799
 let
-	f = range(1/temps_total, stop = échantillonnage, length=length(la))
+	f = range(0, stop = échantillonnage - 1/temps_total, length=length(la))
 	sel = Dict(
 		"abs" => abs,
 		"real" => real,
@@ -205,7 +205,7 @@ La cross-corrélation:
 
 **Convolution theorem**: Notons la tranformée de Fourier de ``f`` par ``\mathcal{F}(f)``. Par la transformée de Fourier, la convolution devient un produit classique:
 ```math
-\mathcal{F}(f \ast g) = \mathcal{F}(f) \cdot \mathcal{F}(g)
+f \ast g = \mathcal{F}^{-1}(\mathcal{F}(f) \cdot \mathcal{F}(g))
 ```
 """
 
@@ -316,7 +316,7 @@ La transformée de Fourier continue et son inverse:
 ```math
 \begin{align}
   F(\xi) & = \int_{-\infty}^\infty f(t) e^{-i 2\pi\xi t} \text{d}\xi\\
-  f(t) & = \int_{-\infty}^\infty F(\xi) e^{-i 2\pi\xi t} \text{d}t
+  f(t) & = \int_{-\infty}^\infty F(\xi) e^{i 2\pi\xi t} \text{d}t
 \end{align}
 ```
 La transformée de Fourier discrète et son inverse:
@@ -337,17 +337,27 @@ md"### 1.2.3 Le replis spectral"
 # ╔═╡ 485e55a9-6348-4eaa-9ed5-31400a00e1df
 N_exp = 100
 
+# ╔═╡ b80ff616-8bb7-4132-88c7-ed10c3c6786c
+md"fin\_signal = $(@bind fin_signal Slider(range(1, stop=10, length=10), default=5, show_value = true))"
+
+# ╔═╡ 56ff3957-0295-41fe-839f-12dae0fdd14f
+md"centre = $(@bind centre Slider(range(0.1, stop=fin_signal, length=32), default=fin_signal / 2, show_value = true))"
+
+# ╔═╡ 4980c4ff-7da0-4747-b779-891569d604fd
+md"ratio = $(@bind ratio Slider(2 .^ (1:4), default=2, show_value = true))"
+
 # ╔═╡ 5032f1f1-47a1-4ff3-b3fd-49d60e5e28a5
 let
-	Δ = -2
-	N = 32
-	x = range(-Δ, stop = Δ, length = 100)
-	gauss(x) = exp(-x^2)
+	N = 512
+	d = ratio
+	x = range(0, stop = fin_signal - fin_signal / N, length = N)
+	gauss(x) = exp(-(x-centre)^2)
 	plot(x, gauss)
 	X = fft(gauss.(x))
-	Xs = X[1:4:end])
-	length(Xs)
-	plot!(x[9:24], real.(ifft())
+	Xs = X[1:d:N]
+	half = div(N, 2d)
+	xs = real.(ifft(Xs))
+	plot!(x[1:length(xs)],xs )
 end
 
 # ╔═╡ 78026d88-7051-11ef-29f0-67f85176a548
@@ -387,7 +397,7 @@ HTMLTag(
 	"details",
 	Join(
 		HTMLTag("summary", html"Quel est la complexité de la convolution vs produit classique s'ils sont discrets de longueur n ?"),
-		md"Convolution: ``\Theta(n^2)``, produit classique: ``\Theta(n)``. On verra que la complexité de la FFT est ``\Theta(n \log(n))`` donc ``\mathcal{F}(f \ast g)`` a une complexité de ``\Theta(n^2 + n \log(n)) = \Theta(n^2)`` et ``\mathcal{F}(f) \cdot \mathcal{F}(g)`` a une complexité de ``\Theta(n + n \log(n)) = \Theta(n\log(n))`` ce qui est plus rapide pour un nombre ``n`` suffisamment grand.",
+		md"Convolution: ``\Theta(n^2)``, produit classique: ``\Theta(n)``. On verra que la complexité de la FFT est ``\Theta(n \log(n))`` donc ``f \ast g`` a une complexité de ``\Theta(n^2)`` et ``\mathcal{F}^{-1}(\mathcal{F}(f) \cdot \mathcal{F}(g))`` a une complexité de ``\Theta(n + 3n \log(n)) = \Theta(n\log(n))`` ce qui est plus rapide pour un nombre ``n`` suffisamment grand.",
 	),
 )
 
@@ -2531,6 +2541,9 @@ version = "1.4.1+1"
 # ╟─d29773c7-a413-46a9-8c62-2f54d4de1730
 # ╠═6070f673-a1b6-4b60-bda7-cb798b6f4aca
 # ╠═485e55a9-6348-4eaa-9ed5-31400a00e1df
+# ╠═b80ff616-8bb7-4132-88c7-ed10c3c6786c
+# ╠═56ff3957-0295-41fe-839f-12dae0fdd14f
+# ╠═4980c4ff-7da0-4747-b779-891569d604fd
 # ╠═5032f1f1-47a1-4ff3-b3fd-49d60e5e28a5
 # ╟─78026d88-7051-11ef-29f0-67f85176a548
 # ╟─dc4c4d53-feb2-40ce-b20e-3386aab2a45f
