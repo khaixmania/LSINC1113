@@ -408,8 +408,17 @@ Un produit matriciel a complexité ``\Omega(n^2)``. Ça ne nous donne pas une co
 On a acquis une intuition géométrique sur les racines ``z_N``. On va s'en servir pour visualiser cette matrice.
 """
 
+# ╔═╡ a33ebf12-5c62-4cc9-af1e-7bad9026db21
+md"Besoin d'un indice ? $(@bind colored_arrows CheckBox())"
+
 # ╔═╡ c64e6062-3793-4556-9001-bf184cd090e9
 md"On peut le vérifier numériquement également:"
+
+# ╔═╡ 6119e719-4e14-4516-ac7e-a236cfb4fcfa
+md"Vérifions le à nouveau numériquement:"
+
+# ╔═╡ f53db6db-d9f9-4371-a551-e3bfc2d6b162
+md"En se rappelant que l'intuition géométrique des `N` racines de l'unité, on comprend pourquoi les `N/2` racines sont un sous-ensembles des `N` racines."
 
 # ╔═╡ bcf5ecbc-ccb6-48ce-9146-55b641f770f2
 md"`max_N` = $(@bind max_N Slider(2 .^ (2:5), default=8, show_value = true))"
@@ -511,14 +520,25 @@ Le nouveau signal de `0` à `t_max/2` sera la somme du signal de `0` à `t_max/2
 	),
 )
 
-# ╔═╡ 64ee09e3-023c-4dd7-adbd-380f037cb19b
+# ╔═╡ ae2adccf-edfc-4cba-97d8-b440946c9b69
 HTMLTag(
 	"details",
 	Join(
-		HTMLTag("summary", html"Qu'observe-t-on ?"),
+		HTMLTag("summary", html"Qu'observe-t-on dans la matrice ci-dessous ?"),
 		md"""
-Soit `F` la matrice de la transformée de fourier
 La partie mauve et bleue sont égales. La partie rouge est l'opposée de la partie verte.
+""",
+	),
+)
+
+# ╔═╡ 7c96fc08-da4a-48e6-a43e-cd24c9aaef42
+HTMLTag(
+	"details",
+	Join(
+		HTMLTag("summary", html"Qu'observe-t-on en comparant cela à la matrice 2 fois plus petite ?"),
+		md"""
+Les parties mauve et bleue sont égale à `F(N ÷ 2)`.
+La ligne `k` (en commençant à `k = 1`) est une rotation de ``2\pi(k-1)/N`` radians (donc une multiplication par ``z^{-(k-1)}``) par rapport à `F(N ÷ 2)`.
 """,
 	),
 )
@@ -550,14 +570,32 @@ partie_bleue = F(8)[5:8, 1:2:8]
 # ╔═╡ ff3ec271-5e08-4ab8-8c13-7f5e1996e383
 partie_mauve == partie_bleue
 
+# ╔═╡ aa4ff136-6739-46dc-aae6-cebcb3b31263
+partie_bleue
+
 # ╔═╡ 8676e10b-6c41-4e8f-a56b-ca548b9690dd
 partie_verte = F(8)[1:4, 2:2:8]
+
+# ╔═╡ 4ead6b3a-af8d-4dc6-905e-bfc4b6a00e64
+partie_verte
 
 # ╔═╡ faf71e8e-7ba0-44fa-800d-949a42fbacec
 partie_rouge = F(8)[5:8, 2:2:8]
 
 # ╔═╡ fd5ef1e7-bc1e-4382-b5c6-e960ecb3c893
 partie_verte == -partie_rouge
+
+# ╔═╡ 3567a3cb-a5be-4d7c-a917-d3947b5549f6
+F(4)
+
+# ╔═╡ 0c74b1e8-a67f-4e41-9638-bb10babf7138
+partie_bleue == F(4)
+
+# ╔═╡ 96c678be-8528-462f-b455-446b9a367fab
+cispi(2/8) .^ (0:-1:-3) .* F(4)
+
+# ╔═╡ 9a7a1c48-8168-4a21-b57e-0aaf2dbb9de8
+partie_verte ≈ cispi(2/8) .^ (0:-1:-3) .* F(4)
 
 # ╔═╡ 0d9e0a31-b229-4d06-92c9-0136404399da
 F(8)
@@ -580,13 +618,13 @@ function arrows(n, use_color = false)
 	plot!()
 end
 
-# ╔═╡ e2a29fb9-4ceb-4084-8e15-aebbd485823b
-arrows(2)
-
-# ╔═╡ ba43fda3-a560-4fcb-bbd1-cafbb99c1662
-arrows(4, true)
-
 # ╔═╡ cd3b2930-2c33-4028-9b27-d25238c79bac
+arrows(8, colored_arrows)
+
+# ╔═╡ 3739ddf4-ecb8-49d5-a70c-aa347c6fb17d
+arrows(4, false)
+
+# ╔═╡ ecf827b8-6a01-4e3b-9856-451239a7b175
 arrows(8, true)
 
 # ╔═╡ 792723a3-0011-422e-bbf4-798624913780
@@ -2626,10 +2664,9 @@ version = "1.4.1+1"
 # ╟─78026d88-7051-11ef-29f0-67f85176a548
 # ╟─dc4c4d53-feb2-40ce-b20e-3386aab2a45f
 # ╟─5f9eeb76-0a9d-40ad-858e-4ab67af46427
-# ╠═e2a29fb9-4ceb-4084-8e15-aebbd485823b
-# ╠═ba43fda3-a560-4fcb-bbd1-cafbb99c1662
-# ╠═cd3b2930-2c33-4028-9b27-d25238c79bac
-# ╟─64ee09e3-023c-4dd7-adbd-380f037cb19b
+# ╟─ae2adccf-edfc-4cba-97d8-b440946c9b69
+# ╟─a33ebf12-5c62-4cc9-af1e-7bad9026db21
+# ╟─cd3b2930-2c33-4028-9b27-d25238c79bac
 # ╟─c64e6062-3793-4556-9001-bf184cd090e9
 # ╠═c9131a2a-8978-4c81-8588-44e4d7071c0b
 # ╠═f24f49d9-10e6-4ff5-ace7-8767c69f8594
@@ -2637,6 +2674,17 @@ version = "1.4.1+1"
 # ╠═8676e10b-6c41-4e8f-a56b-ca548b9690dd
 # ╠═faf71e8e-7ba0-44fa-800d-949a42fbacec
 # ╠═fd5ef1e7-bc1e-4382-b5c6-e960ecb3c893
+# ╟─7c96fc08-da4a-48e6-a43e-cd24c9aaef42
+# ╟─3739ddf4-ecb8-49d5-a70c-aa347c6fb17d
+# ╟─ecf827b8-6a01-4e3b-9856-451239a7b175
+# ╟─6119e719-4e14-4516-ac7e-a236cfb4fcfa
+# ╠═aa4ff136-6739-46dc-aae6-cebcb3b31263
+# ╠═3567a3cb-a5be-4d7c-a917-d3947b5549f6
+# ╠═0c74b1e8-a67f-4e41-9638-bb10babf7138
+# ╠═4ead6b3a-af8d-4dc6-905e-bfc4b6a00e64
+# ╠═96c678be-8528-462f-b455-446b9a367fab
+# ╠═9a7a1c48-8168-4a21-b57e-0aaf2dbb9de8
+# ╟─f53db6db-d9f9-4371-a551-e3bfc2d6b162
 # ╟─bcf5ecbc-ccb6-48ce-9146-55b641f770f2
 # ╟─43c13895-a651-4e61-8fda-abdde42718da
 # ╟─59130f1a-4fcd-4ae1-9ecf-1818dfc07612
