@@ -277,16 +277,23 @@ md"#### 1.2.2.2 Illustration : Le produit de polynômes"
 deg = 4
 
 # ╔═╡ 680c44ba-02b9-41d1-b85f-86f49a85ca7a
+# ╠═╡ disabled = true
+#=╠═╡
 p = Polynomial(rand(deg))
+  ╠═╡ =#
 
 # ╔═╡ 14a60621-f76e-48f6-8dbe-cf4c871b2027
 q = Polynomial(rand(deg))
 
 # ╔═╡ 36be0072-a89e-46e8-84bc-57e208a9e70a
+#=╠═╡
 p * q
+  ╠═╡ =#
 
 # ╔═╡ c312e94d-a461-4d8a-bf56-99699e82fe04
+#=╠═╡
 Polynomials.poly_multiplication_fft(p, q)
+  ╠═╡ =#
 
 # ╔═╡ 4580177c-9654-4950-bbf5-a599adb44db6
 function poly_time(n, with_fft::Bool)
@@ -329,19 +336,22 @@ La transformée de Fourier discrète et son inverse:
 """
 
 # ╔═╡ d29773c7-a413-46a9-8c62-2f54d4de1730
-md"### 1.2.3 Le replis spectral"
+md"""
+### 1.2.3 Le replis spectral
 
-# ╔═╡ 6070f673-a1b6-4b60-bda7-cb798b6f4aca
-Δt_exp = 0.1
+On vient de voir que le signal est extrapolé périodiquement par la transformée de fourier discrète.
+Si on prend un signal de `0` à `t_max` et qu'on divise la fréquence d'échantillonnage de sa transformée de fourier par 2.
+Ça signifie que le signal sera 2 fois moins long.
+"""
 
-# ╔═╡ 485e55a9-6348-4eaa-9ed5-31400a00e1df
-N_exp = 100
+# ╔═╡ 49d078e2-d865-4f2f-9cfc-3c2d5a535088
+md"Illustrons cela avec la fonction `exp(-(t-centre)^2)` qui est initiallement échantillonnée avec `512` échantillons de `0` à `t_max` et qu'on ré-échantillonne ensuite à `512 / ratio` en fréquentiel, ce qui divise `t_max` par `ratio` également."
 
 # ╔═╡ b80ff616-8bb7-4132-88c7-ed10c3c6786c
-md"fin\_signal = $(@bind fin_signal Slider(range(1, stop=10, length=10), default=5, show_value = true))"
+md"t\_max = $(@bind t_max Slider(range(1, stop=10, length=10), default=5, show_value = true))"
 
 # ╔═╡ 56ff3957-0295-41fe-839f-12dae0fdd14f
-md"centre = $(@bind centre Slider(range(0.1, stop=fin_signal, length=32), default=fin_signal / 2, show_value = true))"
+md"centre = $(@bind centre Slider(range(0.1, stop=t_max, length=32), default=t_max / 2, show_value = true))"
 
 # ╔═╡ 4980c4ff-7da0-4747-b779-891569d604fd
 md"ratio = $(@bind ratio Slider(2 .^ (1:4), default=2, show_value = true))"
@@ -350,7 +360,7 @@ md"ratio = $(@bind ratio Slider(2 .^ (1:4), default=2, show_value = true))"
 let
 	N = 512
 	d = ratio
-	x = range(0, stop = fin_signal - fin_signal / N, length = N)
+	x = range(0, stop = t_max - t_max / N, length = N)
 	gauss(x) = exp(-(x-centre)^2)
 	plot(x, gauss)
 	X = fft(gauss.(x))
@@ -361,13 +371,48 @@ let
 end
 
 # ╔═╡ 78026d88-7051-11ef-29f0-67f85176a548
-md"## Fast Fourier Transform"
+md"## 1.3 Fast Fourier Transform"
 
 # ╔═╡ dc4c4d53-feb2-40ce-b20e-3386aab2a45f
 md"""
-* Parmis le [top 10 des meilleurs algorithmes du 20ᵉ siècle](https://archive.siam.org/pdf/news/637.pdf) !
-* Implémenté dans la libraire [FFTW](https://www.fftw.org/) : the Fastest Fourier Transform in the West !
+Attardons-nous à présent sur l'algorithme utilisé pour calculé la DFT (transformée de fourier discrète).
+On a vu précédemment que cet algorithme a une complexité de ``\Omega(n \log(n))``.
+C'est parmis le [top 10 des meilleurs algorithmes du 20ᵉ siècle](https://archive.siam.org/pdf/news/637.pdf) !
+Son Implémentation la plus rapide est dans la libraire [FFTW](https://www.fftw.org/) : the Fastest Fourier Transform in the West ! Comment est-elle la plus rapide ? Voir [ici](https://youtu.be/mSgXWpvQEHE?t=1800).
+L'algorithme est initialement découvert part Gauss en 1805 puis redécouvert par Cooley et Tukey en 1965.
 """
+
+# ╔═╡ 5f9eeb76-0a9d-40ad-858e-4ab67af46427
+md"""
+La DFT est en fait une évaluation d'un polynômes aux différentes racines `N`ièmes de l'unité:
+```math
+\begin{align}
+  X_k & = \sum_{n=0}^{N-1} x_n e^{-i 2\pi \frac{k}{N} n}\\
+  X_k & = \sum_{n=0}^{N-1} x_n z_N^{n} \qquad z_N = e^{-i 2\pi \frac{k}{N}}
+\end{align}
+```
+La DFT peut aussi être vue comme un produit matriciel:
+```math
+  X =
+  \begin{bmatrix}
+    1 & 1 & \cdots & 1 & 1\\
+    1 & z_N & \cdots & z_N^{N-2} & z_N^{N-1}\\
+    1 & z_N^2 & \cdots & z_N^{2(N-2)} & z_N^{2(N-1)}\\
+	\vdots & \vdots & \ddots & \vdots & \vdots\\
+    1 & z_N^{(N-1)2} & \cdots & z_N^{(N-1)(N-2)} & z_N^{(N-1)(N-1)}
+  \end{bmatrix}
+  x
+```
+Un produit matriciel a complexité ``\Omega(n^2)``. Ça ne nous donne pas une complexité de ``\Omega(n \log n)``, il va falloir utiliser la structure assez spéciale de cette matrice...
+
+On a acquis une intuition géométrique sur les racines ``z_N``. On va s'en servir pour visualiser cette matrice.
+"""
+
+# ╔═╡ c64e6062-3793-4556-9001-bf184cd090e9
+md"On peut le vérifier numériquement également:"
+
+# ╔═╡ bcf5ecbc-ccb6-48ce-9146-55b641f770f2
+md"`max_N` = $(@bind max_N Slider(2 .^ (2:5), default=8, show_value = true))"
 
 # ╔═╡ 59130f1a-4fcd-4ae1-9ecf-1818dfc07612
 md"## Utilitaires"
@@ -455,18 +500,35 @@ Plus précisément, la discrétisation en temporelle rend le signal fréquentiel
 	),
 )
 
+# ╔═╡ b915e8c7-bc11-4f3f-88f0-a82dfe447643
+HTMLTag(
+	"details",
+	Join(
+		HTMLTag("summary", html"Que va-t-il advenir de la deuxième moitié du signal ?"),
+		md"""
+Le nouveau signal de `0` à `t_max/2` sera la somme du signal de `0` à `t_max/2` et du signal de `t_max/2` à `t_max`.
+""",
+	),
+)
+
+# ╔═╡ 64ee09e3-023c-4dd7-adbd-380f037cb19b
+HTMLTag(
+	"details",
+	Join(
+		HTMLTag("summary", html"Qu'observe-t-on ?"),
+		md"""
+Soit `F` la matrice de la transformée de fourier
+La partie mauve et bleue sont égales. La partie rouge est l'opposée de la partie verte.
+""",
+	),
+)
+
 # ╔═╡ 6ee59f20-cd09-49a9-a0e6-59ce71e8d13f
 function Base.show(io::IO, mime::MIME"text/html", d::HTMLTag)
 	write(io, "<", d.tag, ">")
 	show(io, mime, d.parent)
 	write(io, "</", d.tag, ">")
 end
-
-# ╔═╡ 0d42bfd6-55f0-47cc-97fa-8e7e8bd87624
-clean(a::Real) = abs(a) < 1e-10 ? zero(a) : a
-
-# ╔═╡ fc202ab1-260e-4dfb-bc1b-66295dcb8dd6
-clean(a::Complex) = Complex(clean(real(a)), clean(imag(a)))
 
 # ╔═╡ 0e9e8c6e-83ff-4c4c-b9d1-19a0593a3cba
 f(i, j, n) = cispi(-2 * i * j / n)
@@ -479,17 +541,26 @@ function F(n)
 	]
 end
 
-# ╔═╡ 1ec04bf9-98cd-4bff-b761-f4ec3bba605f
-F(2)
+# ╔═╡ c9131a2a-8978-4c81-8588-44e4d7071c0b
+partie_mauve = F(8)[1:4, 1:2:8]
 
-# ╔═╡ 5d2bda1f-c49c-4aa3-afae-da39dfa93ca4
-clean.(F(2))
+# ╔═╡ f24f49d9-10e6-4ff5-ace7-8767c69f8594
+partie_bleue = F(8)[5:8, 1:2:8]
 
-# ╔═╡ 1005c41f-9fd7-4cb1-bf60-f6c95d5aaa93
-clean.(F(4))
+# ╔═╡ ff3ec271-5e08-4ab8-8c13-7f5e1996e383
+partie_mauve == partie_bleue
+
+# ╔═╡ 8676e10b-6c41-4e8f-a56b-ca548b9690dd
+partie_verte = F(8)[1:4, 2:2:8]
+
+# ╔═╡ faf71e8e-7ba0-44fa-800d-949a42fbacec
+partie_rouge = F(8)[5:8, 2:2:8]
+
+# ╔═╡ fd5ef1e7-bc1e-4382-b5c6-e960ecb3c893
+partie_verte == -partie_rouge
 
 # ╔═╡ 0d9e0a31-b229-4d06-92c9-0136404399da
-clean.(F(8))
+F(8)
 
 # ╔═╡ f80595c3-6bbb-4b62-b03b-1c80cecaf7f9
 function arrows(n, use_color = false)
@@ -497,24 +568,12 @@ function arrows(n, use_color = false)
 	for i in 0:(n-1)
 		for j in 0:(n-1)
 			if use_color
-				color = if iseven(j)
-					if 2i < n
-						:black
-					else
-						:red
-					end
-				else
-					if 2i < n
-						:blue
-					else
-						:green
-					end
-				end
+				color = Colors.JULIA_LOGO_COLORS[1 + iseven(j) * 2 + (2i < n)]
 			else
 				color = :black
 			end
 			scatter!([j], [-i], markersize = 8 / sqrt(n), markerstrokewidth = 0, legend = nothing; color)
-			c = f(i, j, n) / 3
+			c = f(i, j, n) / 3 # Divide by 3 so that arrow is not too long in plot
 			plot!([j, j + real(c)], [-i, -i + imag(c)], arrow = true, legend = nothing; color)
 		end
 	end
@@ -529,6 +588,25 @@ arrows(4, true)
 
 # ╔═╡ cd3b2930-2c33-4028-9b27-d25238c79bac
 arrows(8, true)
+
+# ╔═╡ 792723a3-0011-422e-bbf4-798624913780
+function draw_roots!(N; kws...)
+	for i in 1:N
+		b, a = sincospi(2 * i / N)
+		plot!([0, a], [0, b]; arrow = true, label = nothing, kws...)
+	end
+end
+
+# ╔═╡ 43c13895-a651-4e61-8fda-abdde42718da
+let
+	p = plot(ratio = :equal, ticks = nothing, showaxis = false)
+	max_pow = round(Int, log2(max_N))
+	colors = []
+	for pow in max_pow:-1:2
+		draw_roots!(2^pow, linewidth = 2 * (pow - 1), color = Colors.JULIA_LOGO_COLORS[pow - 1])
+	end
+	p
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2539,17 +2617,28 @@ version = "1.4.1+1"
 # ╟─3524f1bf-8e39-4d04-9dc3-e434e65db409
 # ╟─57373c5b-a34a-4e48-af42-27a0bd05a173
 # ╟─d29773c7-a413-46a9-8c62-2f54d4de1730
-# ╠═6070f673-a1b6-4b60-bda7-cb798b6f4aca
-# ╠═485e55a9-6348-4eaa-9ed5-31400a00e1df
+# ╟─b915e8c7-bc11-4f3f-88f0-a82dfe447643
+# ╟─49d078e2-d865-4f2f-9cfc-3c2d5a535088
 # ╠═b80ff616-8bb7-4132-88c7-ed10c3c6786c
 # ╠═56ff3957-0295-41fe-839f-12dae0fdd14f
 # ╠═4980c4ff-7da0-4747-b779-891569d604fd
 # ╠═5032f1f1-47a1-4ff3-b3fd-49d60e5e28a5
 # ╟─78026d88-7051-11ef-29f0-67f85176a548
 # ╟─dc4c4d53-feb2-40ce-b20e-3386aab2a45f
+# ╟─5f9eeb76-0a9d-40ad-858e-4ab67af46427
 # ╠═e2a29fb9-4ceb-4084-8e15-aebbd485823b
 # ╠═ba43fda3-a560-4fcb-bbd1-cafbb99c1662
 # ╠═cd3b2930-2c33-4028-9b27-d25238c79bac
+# ╟─64ee09e3-023c-4dd7-adbd-380f037cb19b
+# ╟─c64e6062-3793-4556-9001-bf184cd090e9
+# ╠═c9131a2a-8978-4c81-8588-44e4d7071c0b
+# ╠═f24f49d9-10e6-4ff5-ace7-8767c69f8594
+# ╠═ff3ec271-5e08-4ab8-8c13-7f5e1996e383
+# ╠═8676e10b-6c41-4e8f-a56b-ca548b9690dd
+# ╠═faf71e8e-7ba0-44fa-800d-949a42fbacec
+# ╠═fd5ef1e7-bc1e-4382-b5c6-e960ecb3c893
+# ╟─bcf5ecbc-ccb6-48ce-9146-55b641f770f2
+# ╟─43c13895-a651-4e61-8fda-abdde42718da
 # ╟─59130f1a-4fcd-4ae1-9ecf-1818dfc07612
 # ╠═583c3b75-71cf-48f6-b93d-2201c6c7d520
 # ╠═34c779d2-5a9d-4c98-ac28-e4be1a85da40
@@ -2558,14 +2647,10 @@ version = "1.4.1+1"
 # ╠═9e6732a7-d2df-465f-a7fa-c119a64deb9a
 # ╠═d163ec11-3c0a-4cab-8dcf-8d56fda1ce6c
 # ╠═6ee59f20-cd09-49a9-a0e6-59ce71e8d13f
-# ╠═0d42bfd6-55f0-47cc-97fa-8e7e8bd87624
-# ╠═fc202ab1-260e-4dfb-bc1b-66295dcb8dd6
 # ╠═0e9e8c6e-83ff-4c4c-b9d1-19a0593a3cba
 # ╠═5e5ff9b1-0a78-4e9c-9c90-4fb80b0dbe21
-# ╟─1ec04bf9-98cd-4bff-b761-f4ec3bba605f
-# ╠═5d2bda1f-c49c-4aa3-afae-da39dfa93ca4
-# ╠═1005c41f-9fd7-4cb1-bf60-f6c95d5aaa93
 # ╠═0d9e0a31-b229-4d06-92c9-0136404399da
 # ╠═f80595c3-6bbb-4b62-b03b-1c80cecaf7f9
+# ╠═792723a3-0011-422e-bbf4-798624913780
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
