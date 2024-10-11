@@ -277,23 +277,16 @@ md"#### 1.2.2.2 Illustration : Le produit de polynômes"
 deg = 4
 
 # ╔═╡ 680c44ba-02b9-41d1-b85f-86f49a85ca7a
-# ╠═╡ disabled = true
-#=╠═╡
 p = Polynomial(rand(deg))
-  ╠═╡ =#
 
 # ╔═╡ 14a60621-f76e-48f6-8dbe-cf4c871b2027
 q = Polynomial(rand(deg))
 
 # ╔═╡ 36be0072-a89e-46e8-84bc-57e208a9e70a
-#=╠═╡
 p * q
-  ╠═╡ =#
 
 # ╔═╡ c312e94d-a461-4d8a-bf56-99699e82fe04
-#=╠═╡
 Polynomials.poly_multiplication_fft(p, q)
-  ╠═╡ =#
 
 # ╔═╡ 4580177c-9654-4950-bbf5-a599adb44db6
 function poly_time(n, with_fft::Bool)
@@ -335,6 +328,12 @@ La transformée de Fourier discrète et son inverse:
 ```
 """
 
+# ╔═╡ 86368d24-c206-42dc-afdb-1e762b3ac14c
+md"Rajouter linearité : TODO"
+
+# ╔═╡ f0eda0e0-0a52-403a-a73d-3a604cbe557c
+md"TODO : même dimension en temporel et fréquentiel"
+
 # ╔═╡ d29773c7-a413-46a9-8c62-2f54d4de1730
 md"""
 ### 1.2.3 Le replis spectral
@@ -354,20 +353,20 @@ md"t\_max = $(@bind t_max Slider(range(1, stop=10, length=10), default=5, show_v
 md"centre = $(@bind centre Slider(range(0.1, stop=t_max, length=32), default=t_max / 2, show_value = true))"
 
 # ╔═╡ 4980c4ff-7da0-4747-b779-891569d604fd
-md"ratio = $(@bind ratio Slider(2 .^ (1:4), default=2, show_value = true))"
+md"ratio = $(@bind ratio Slider(2 .^ (0:4), default=2, show_value = true))"
 
 # ╔═╡ 5032f1f1-47a1-4ff3-b3fd-49d60e5e28a5
 let
 	N = 512
 	d = ratio
 	x = range(0, stop = t_max - t_max / N, length = N)
-	gauss(x) = exp(-(x-centre)^2)
-	plot(x, gauss)
+	gauss(x) = exp(-16(x-centre)^2)/4 + exp(-16(x-centre/2)^2)
+	plot(x, gauss, label = "signal original")
 	X = fft(gauss.(x))
 	Xs = X[1:d:N]
 	half = div(N, 2d)
 	xs = real.(ifft(Xs))
-	plot!(x[1:length(xs)],xs )
+	plot!(x[1:length(xs)], xs, label = "rééchantilloné")
 end
 
 # ╔═╡ 78026d88-7051-11ef-29f0-67f85176a548
@@ -388,7 +387,7 @@ La DFT est en fait une évaluation d'un polynômes aux différentes racines `N`i
 ```math
 \begin{align}
   X_k & = \sum_{n=0}^{N-1} x_n e^{-i 2\pi \frac{k}{N} n}\\
-  X_k & = \sum_{n=0}^{N-1} x_n z_N^{n} \qquad z_N = e^{-i 2\pi \frac{k}{N}}
+  X_k & = \sum_{n=0}^{N-1} x_n z_{k,N}^{n} \qquad z_{k,N} = e^{-i 2\pi \frac{k}{N}}
 \end{align}
 ```
 La DFT peut aussi être vue comme un produit matriciel:
@@ -414,8 +413,17 @@ md"Besoin d'un indice ? $(@bind colored_arrows CheckBox())"
 # ╔═╡ c64e6062-3793-4556-9001-bf184cd090e9
 md"On peut le vérifier numériquement également:"
 
+# ╔═╡ f952619b-194a-4088-a2bb-b8210392417a
+isapprox(0.0, 1e-300, atol = 1e-8)
+
 # ╔═╡ 6119e719-4e14-4516-ac7e-a236cfb4fcfa
 md"Vérifions le à nouveau numériquement:"
+
+# ╔═╡ 6d79251e-f7d5-4126-a781-7221a4313c9a
+cispi(-2/8)
+
+# ╔═╡ 59bc8221-938c-4919-8b94-7a2d61cf2062
+cispi(-2/8) .^ collect(0:3)
 
 # ╔═╡ f53db6db-d9f9-4371-a551-e3bfc2d6b162
 md"En se rappelant que l'intuition géométrique des `N` racines de l'unité, on comprend pourquoi les `N/2` racines sont un sous-ensembles des `N` racines."
@@ -561,6 +569,9 @@ function F(n)
 	]
 end
 
+# ╔═╡ 222cfba3-88f7-4824-92ca-f9ab81a000c4
+F(8)
+
 # ╔═╡ c9131a2a-8978-4c81-8588-44e4d7071c0b
 partie_mauve = F(8)[1:4, 1:2:8]
 
@@ -592,10 +603,10 @@ F(4)
 partie_bleue == F(4)
 
 # ╔═╡ 96c678be-8528-462f-b455-446b9a367fab
-cispi(2/8) .^ (0:-1:-3) .* F(4)
+cispi(-2/8) .^ (0:3) .* F(4)
 
 # ╔═╡ 9a7a1c48-8168-4a21-b57e-0aaf2dbb9de8
-partie_verte ≈ cispi(2/8) .^ (0:-1:-3) .* F(4)
+isapprox.(real.(partie_verte), real.(cispi(-2/8) .^ (0:3) .* F(4)), atol=1e-8)
 
 # ╔═╡ 0d9e0a31-b229-4d06-92c9-0136404399da
 F(8)
@@ -2652,21 +2663,24 @@ version = "1.4.1+1"
 # ╠═9500f893-7eb0-4f24-83eb-5a2240279062
 # ╟─87dbf272-1d03-4f9e-b7e1-9b76197b0a83
 # ╟─44f73082-7cdb-47b9-bb86-f952ac7c4498
+# ╟─86368d24-c206-42dc-afdb-1e762b3ac14c
 # ╟─3524f1bf-8e39-4d04-9dc3-e434e65db409
+# ╟─f0eda0e0-0a52-403a-a73d-3a604cbe557c
 # ╟─57373c5b-a34a-4e48-af42-27a0bd05a173
 # ╟─d29773c7-a413-46a9-8c62-2f54d4de1730
 # ╟─b915e8c7-bc11-4f3f-88f0-a82dfe447643
 # ╟─49d078e2-d865-4f2f-9cfc-3c2d5a535088
-# ╠═b80ff616-8bb7-4132-88c7-ed10c3c6786c
-# ╠═56ff3957-0295-41fe-839f-12dae0fdd14f
-# ╠═4980c4ff-7da0-4747-b779-891569d604fd
-# ╠═5032f1f1-47a1-4ff3-b3fd-49d60e5e28a5
+# ╟─b80ff616-8bb7-4132-88c7-ed10c3c6786c
+# ╟─56ff3957-0295-41fe-839f-12dae0fdd14f
+# ╟─4980c4ff-7da0-4747-b779-891569d604fd
+# ╟─5032f1f1-47a1-4ff3-b3fd-49d60e5e28a5
 # ╟─78026d88-7051-11ef-29f0-67f85176a548
 # ╟─dc4c4d53-feb2-40ce-b20e-3386aab2a45f
 # ╟─5f9eeb76-0a9d-40ad-858e-4ab67af46427
+# ╠═222cfba3-88f7-4824-92ca-f9ab81a000c4
 # ╟─ae2adccf-edfc-4cba-97d8-b440946c9b69
 # ╟─a33ebf12-5c62-4cc9-af1e-7bad9026db21
-# ╟─cd3b2930-2c33-4028-9b27-d25238c79bac
+# ╠═cd3b2930-2c33-4028-9b27-d25238c79bac
 # ╟─c64e6062-3793-4556-9001-bf184cd090e9
 # ╠═c9131a2a-8978-4c81-8588-44e4d7071c0b
 # ╠═f24f49d9-10e6-4ff5-ace7-8767c69f8594
@@ -2674,14 +2688,17 @@ version = "1.4.1+1"
 # ╠═8676e10b-6c41-4e8f-a56b-ca548b9690dd
 # ╠═faf71e8e-7ba0-44fa-800d-949a42fbacec
 # ╠═fd5ef1e7-bc1e-4382-b5c6-e960ecb3c893
+# ╠═f952619b-194a-4088-a2bb-b8210392417a
 # ╟─7c96fc08-da4a-48e6-a43e-cd24c9aaef42
-# ╟─3739ddf4-ecb8-49d5-a70c-aa347c6fb17d
+# ╠═3739ddf4-ecb8-49d5-a70c-aa347c6fb17d
 # ╟─ecf827b8-6a01-4e3b-9856-451239a7b175
 # ╟─6119e719-4e14-4516-ac7e-a236cfb4fcfa
 # ╠═aa4ff136-6739-46dc-aae6-cebcb3b31263
 # ╠═3567a3cb-a5be-4d7c-a917-d3947b5549f6
 # ╠═0c74b1e8-a67f-4e41-9638-bb10babf7138
 # ╠═4ead6b3a-af8d-4dc6-905e-bfc4b6a00e64
+# ╠═6d79251e-f7d5-4126-a781-7221a4313c9a
+# ╠═59bc8221-938c-4919-8b94-7a2d61cf2062
 # ╠═96c678be-8528-462f-b455-446b9a367fab
 # ╠═9a7a1c48-8168-4a21-b57e-0aaf2dbb9de8
 # ╟─f53db6db-d9f9-4371-a551-e3bfc2d6b162
