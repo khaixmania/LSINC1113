@@ -6,3 +6,4 @@
 [GitHub](https://github.com/blegat/LSINC1113)
 
 Ce repo contient les notebooks pluto des cours.
+Une version statique des notebooks disponible [ici](https://blegat.github.io/LSINC1113/) peut aussi être visualisée via votre navigateur sans le besoin d'installer Julia ni Pluto.
