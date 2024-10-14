@@ -20,13 +20,52 @@ using Plots, OneHotArrays, PlutoUI
 # ╔═╡ 77a7de14-87d2-11ef-21ef-937b8239db5b
 md"""
 # Automatic Differentiation
+
+On peut calculer des dérivées partielles de différentes manières:
+1. De façon symbolique, en fixant une des variables et en dérivant les autres soit à la main, soit par ordinateur.
+2. De façon numérique, avec la formule ``f'(x) \approx (f(x + h) - f(x)) / h``.
+3. De façon algorithmique, soit forward, soit reverse, c'est ce que nous verons ici.
+
+Pour illustrer, nous utiliserons l'exemple de classification de points de deux formes de lunes.
 """
+
+# ╔═╡ 677a40de-ef6d-4a41-84f6-05ef6580aeba
+md"Nous travaillerons avec une matrice `X` contenant dans chaque ligne, les coordonnées d'un point."
+
+# ╔═╡ 0325e4a5-f50d-4064-b558-9f6275d4cd5a
+md"Le vecteur `y` contiendra `1` pour les points de la lune bleue et `-1` pour les points de la lune rouge."
+
+# ╔═╡ 860acc4a-f9ee-49c1-a6d1-d81a3c51d9a8
+md"Nous illustrons le calcul de dérivée automatique par l'entrainement du modèle linéaire ``y \approx X w``. Commençons avec des poids aléatoires. Le modèle n'est pour le moment pas très précis comme il est aléatoire."
 
 # ╔═╡ 55a0a91d-ebe4-4d8a-a094-b6e0aeec4587
 w = rand(2)
 
+# ╔═╡ c5b0cb9c-40be-44f6-9173-5a0631ab8834
+md"En effet, les prédictions ne correspondent pas à `y`."
+
+# ╔═╡ b4d2b635-bbb3-4024-877b-a96fdd19349e
+md"On peut regrouper les erreurs des estimations de tous les points en les comparant avec `y`."
+
+# ╔═╡ af404768-0663-4bc3-81dd-6931b3a486be
+md"Essayons de trouver des poids `w` qui minimisent la somme des carrés des erreurs (aka MSE):"
+
 # ╔═╡ 277bd2ce-fa7f-4288-be8a-0ddd8f23635c
-md"## Forward Differentiation"
+md"""
+## Forward Differentiation
+
+Commençons par définir la forward differentiation. Cette différentiation algorithmique se base sur l'observation que la chain rule permet de calculer la dérivée de n'importe quelle fonction dès lors qu'on connait sont gradient et la dérivée de chacun de ses paramètres.
+En d'autres mots, supposons qu'on doive calculer
+```math
+\frac{\partial}{\partial x} f(g(x), h(x))
+```
+Supposons que la fonction `f` soit une fonction `f(a, b)` simple (telle que `+`, `*`, `-`) dont on connait la formules des dérivée partielles ``\partial f / \partial a`` en fonction de `a` et ``\partial f / \partial b`` en fonction de `b`:
+La chain rule nous donne
+```math
+\frac{\partial}{\partial x} f(g(x), h(x)) = \frac{\partial f}{\partial a}(g(x), h(x)) \frac{\partial g}{\partial x} + \frac{\partial f}{\partial b}(g(x), h(x)) \frac{\partial h}{\partial x}
+```
+Pour calculer cette expression, ils nous faut les valeurs de ``g(x)`` et ``h(x)`` ainsi que les dérivées ``\partial g / \partial x`` et ``\partial h / \partial x``.
+"""
 
 # ╔═╡ 94f2f9ef-9467-4781-9dfb-f0a32141f542
 begin
@@ -360,9 +399,11 @@ md"""
 """
 
 # ╔═╡ c1da4130-5936-499f-bb9b-574e01136eca
-md"### Acknowledgements
+md"### Acknowledgements and further readings
 
-Inspiré de [ForwardDiff](https://github.com/JuliaDiff/ForwardDiff.jl) et [micrograd](https://github.com/karpathy/micrograd).
+* `Dual` est inspiré de [ForwardDiff](https://github.com/JuliaDiff/ForwardDiff.jl)
+* `Node` est inspiré de [micrograd](https://github.com/karpathy/micrograd)
+* Une bonne intro à l'automatic differentiation est disponible [ici](https://gdalle.github.io/AutodiffTutorial/)
 "
 
 # ╔═╡ b16f6225-1949-4b6d-a4b0-c5c230eb4c7f
@@ -405,20 +446,13 @@ plot_w(w)
 X = Tables.matrix(X_table)
 
 # ╔═╡ 76c147ac-73c1-421f-9c9d-681a91e02b91
-# ╠═╡ disabled = true
-#=╠═╡
 y_est = X * w
-  ╠═╡ =#
 
 # ╔═╡ 03bc2513-e542-4ac8-8edc-8fdf3793b834
-#=╠═╡
 errors = y_est - y
-  ╠═╡ =#
 
 # ╔═╡ 0af91567-90ae-47d2-9d5a-9f33b623a204
-#=╠═╡
 mean_squared_error = sum(errors.^2) / length(errors)
-  ╠═╡ =#
 
 # ╔═╡ 96e35052-8697-495c-8ded-5f6348b7e711
 mse(w, X, y)
@@ -2293,14 +2327,20 @@ version = "1.4.1+1"
 # ╔═╡ Cell order:
 # ╟─77a7de14-87d2-11ef-21ef-937b8239db5b
 # ╠═0a6b0db0-03f7-4077-b330-5f27f7c7a9a2
-# ╠═d893fb13-fadb-452c-ba93-96f630bab3cd
+# ╟─d893fb13-fadb-452c-ba93-96f630bab3cd
 # ╠═36401e91-1121-4552-bc4e-1b1aac76d1e0
+# ╟─677a40de-ef6d-4a41-84f6-05ef6580aeba
 # ╠═28349f82-f2e7-46ea-82b5-306e9dbb6daa
+# ╟─0325e4a5-f50d-4064-b558-9f6275d4cd5a
 # ╠═7535debf-13ff-4bef-92fb-cdbf7fef7515
+# ╟─860acc4a-f9ee-49c1-a6d1-d81a3c51d9a8
 # ╠═55a0a91d-ebe4-4d8a-a094-b6e0aeec4587
 # ╠═054a167c-1d5c-4c8a-9977-22b4e4d5f05d
+# ╟─c5b0cb9c-40be-44f6-9173-5a0631ab8834
 # ╠═76c147ac-73c1-421f-9c9d-681a91e02b91
+# ╟─b4d2b635-bbb3-4024-877b-a96fdd19349e
 # ╠═03bc2513-e542-4ac8-8edc-8fdf3793b834
+# ╟─af404768-0663-4bc3-81dd-6931b3a486be
 # ╠═0af91567-90ae-47d2-9d5a-9f33b623a204
 # ╠═2d469929-da96-4b07-a5a4-defa3d253c81
 # ╠═96e35052-8697-495c-8ded-5f6348b7e711
