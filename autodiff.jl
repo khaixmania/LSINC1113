@@ -58,17 +58,11 @@ end
 # ╔═╡ 80356507-0b92-4c62-8bdf-865e345a29dc
 md"Par la product rule ``(fg)' = f'g + fg'``:"
 
-# ╔═╡ 851e688f-2b30-44b7-9530-87990adee4b2
-Base.:*(x::Dual{T}, y::Dual{T}) where {T} = Dual(x.value * y.value, x.value * y.derivative + x.derivative * y.value)
-
 # ╔═╡ c0caef28-d59a-43a1-af4f-6756c3b41903
 md"Pour l'exponentiation, on peut juste se rabatter sur le produit qu'on a déjà défini:"
 
 # ╔═╡ a2ac721c-700e-4bbf-8c13-3b06db292c00
 Base.:^(x::Dual, n::Integer) = Base.power_by_squaring(x, n)
-
-# ╔═╡ 2d469929-da96-4b07-a5a4-defa3d253c81
-mse(w, X, y) = sum((X * w - y).^2 / length(y))
 
 # ╔═╡ 3f7cfa28-b060-4a3e-b61a-fd42be8e6939
 onehot(1, 1:2)
@@ -96,7 +90,8 @@ end
 md"""
 ## Gradient descent
 
-Cauchy-Schwarz inequality:
+### Cauchy-Schwarz inequality
+
 ```math
 \begin{align}
   \left(\sum_i x_i y_i\right)^2 & = \left(\sum_i x_i^2\right)\left(\sum_i y_i^2\right)\cos(\theta)^2\\
@@ -106,19 +101,93 @@ Cauchy-Schwarz inequality:
 \end{align}
 ```
 Minimum atteint lorsque ``x = -y`` et maximum atteint lorsque ``x = y``.
+Dans les deux cas, ``x`` est **parallèle** à ``y``, mais ce sont des **sens** différents.
+
+### Rappel dérivée directionnelle
+
+Dérivée dans la direction ``d``:
+
+```math
+\langle d, \nabla f \rangle
+=
+d^\top \nabla f
+=
+d_1 \cdot \partial f/\partial x_1 + \cdots + d_n \cdot \partial f/\partial x_n
+```
+Etant donné un gradient ``\nabla f``, la direction ``d`` telle que ``\|d\|_2 = 1`` qui a une dérivée minmale est ``d = -\nabla f``.
 """
 
 # ╔═╡ b025aa9e-1137-4201-b7b8-2b803f8aa17e
 md"Gradient:"
 
 # ╔═╡ 0b4d8741-e9fb-40e4-a8be-cf21683b8f79
-md"Gradient line search:"
+md"Gradient line search: pendant combien de temps doit-on suivre le gradient ?"
 
 # ╔═╡ 53fe00ff-32d1-4c61-ae89-e54df5efc3a0
 @bind num_η Slider(5:50, default=10, show_value = true)
 
 # ╔═╡ 7ad77ed6-de39-430e-9e71-1c3d37ce7f34
 step_sizes = range(-1, stop=1, length=num_η)
+
+# ╔═╡ 52a049a9-c50f-426c-83e5-4ec02d5a638c
+md"`num_iters` = $(@bind num_iters Slider(1:20, default = 10, show_value = true))"
+
+# ╔═╡ b1aa765e-7a6b-4ab4-af83-ab3d30497866
+md"## Kernel trick"
+
+# ╔═╡ f71923d4-fbc9-4ce6-b5be-a00437c3651d
+md"`η_lift` = $(@bind η_lift Slider(exp10.(-4:0.25:1), default=1, show_value = true))"
+
+# ╔═╡ 18edd949-ce86-431a-a19b-4daf526e57a6
+md"`num_iters_lift` = $(@bind num_iters_lift Slider(1:200, default=10, show_value = true))"
+
+# ╔═╡ dc4feb58-d2cf-4a97-aaed-7f4593fc9732
+md"### L1 norm"
+
+# ╔═╡ f5749121-8e75-45de-95b9-63fff584e350
+md"`η_L1` = $(@bind η_L1 Slider(exp10.(-4:0.25:1), default=1, show_value = true))"
+
+# ╔═╡ 66e36fb8-5a61-49a7-8053-911fd887b0a9
+md"`num_iters_L1` = $(@bind num_iters_L1 Slider(1:200, default=10, show_value = true))"
+
+# ╔═╡ 613269ef-16ba-44ef-ad8e-997cc9aec1fb
+md"""
+## Reverse diff
+
+### Chain rule
+
+```math
+\frac{\partial}{\partial x} f(g(x), h(x)) = \frac{\partial f}{\partial g} \frac{\partial g}{\partial x} + \frac{\partial f}{\partial h} \frac{\partial h}{\partial x}
+```
+"""
+
+# ╔═╡ 4931adf1-8771-4708-833e-d05c05884969
+begin
+	mutable struct Node{T}
+		op::Union{Nothing,Symbol}
+		args::Vector{Node{T}}
+		value::T
+		derivative::T
+	end
+	Node(op, args, value::T) where {T} = Node(op, args, value, zero(T))
+	Node(value::T) where {T} = Node(nothing, Node{T}[], value)
+end
+
+# ╔═╡ b814dc16-37de-45d1-9c7c-4eec45d3f956
+begin
+	Base.zero(x::Node{T}) where {T} = Node(zero(T))
+	Base.:*(x::Node, y::Node) = Node(:*, [x, y], x.value * y.value)
+	Base.:+(x::Node, y::Node) = Node(:+, [x, y], x.value + y.value)
+	Base.:-(x::Node, y::Node) = Node(:-, [x, y], x.value - y.value)
+	Base.:/(x::Node, y::Number) = x * Node(inv(y))
+	Base.:^(x::Node, n::Integer) = Base.power_by_squaring(x, n)
+end
+
+# ╔═╡ 851e688f-2b30-44b7-9530-87990adee4b2
+Base.:*(x::Dual{T}, y::Dual{T}) where {T} = Dual(x.value * y.value, x.value * y.derivative + x.derivative * y.value)
+
+# ╔═╡ 2d469929-da96-4b07-a5a4-defa3d253c81
+mse(w, X, y) = sum((X * w - y).^2 / length(y))
 
 # ╔═╡ 15390f36-bc62-4c25-a866-5641aecc86ed
 function train!(diff, loss, w0, X, y, η, num_iters)
@@ -132,17 +201,8 @@ function train!(diff, loss, w0, X, y, η, num_iters)
 	return w, training_losses
 end
 
-# ╔═╡ 52a049a9-c50f-426c-83e5-4ec02d5a638c
-md"`num_iters` = $(@bind num_iters Slider(1:20, default = 10, show_value = true))"
-
-# ╔═╡ b1aa765e-7a6b-4ab4-af83-ab3d30497866
-md"## Kernel trick"
-
-# ╔═╡ 18edd949-ce86-431a-a19b-4daf526e57a6
-md"`num_iters_lift` = $(@bind num_iters_lift Slider(1:50, default=10, show_value = true))"
-
-# ╔═╡ dc4feb58-d2cf-4a97-aaed-7f4593fc9732
-md"### L1 norm"
+# ╔═╡ a767d45f-a438-4d87-bdab-7d55ea7458ac
+lift(x) = [1.0, x[1], x[2], x[1]^2, x[1] * x[2], x[2]^2, x[1]^3, x[1]^2 * x[2], x[1] * x[2]^2, x[2]^3]
 
 # ╔═╡ 42644265-8f26-4118-9e8f-537078847af7
 function Base.abs(d::Dual)
@@ -156,20 +216,97 @@ end
 # ╔═╡ b899a93f-9bec-48ce-b0ad-4e5157556a31
 L1_loss(w, X, y) = sum(abs.(X * w - y)) / length(y)
 
-# ╔═╡ f5749121-8e75-45de-95b9-63fff584e350
-md"`η_L1` = $(@bind η_L1 Slider(exp10.(-4:1), default=1, show_value = true))"
+# ╔═╡ cf81d0e0-4268-4ce5-82c5-8eca1e410233
+md"Note: Une amélioration sera vue avec le tri topologique (voir théorie des graphes)"
 
-# ╔═╡ 66e36fb8-5a61-49a7-8053-911fd887b0a9
-md"`num_iters_L1` = $(@bind num_iters_L1 Slider(1:100, default=10, show_value = true))"
+# ╔═╡ 86872f35-d62d-40e5-8770-4585d3b0c0d7
+function topo_sort!(visited, topo, f::Node)
+	if !(f in visited)
+		push!(visited, f)
+		for arg in f.args
+			topo_sort!(visited, topo, arg)
+		end
+		push!(topo, f)
+	end
+end
 
-# ╔═╡ 613269ef-16ba-44ef-ad8e-997cc9aec1fb
-md"""
-## Revserse diff
+# ╔═╡ 1e08b49d-03fe-4fb3-a8ba-3a00e1374b32
+function _backward!(f::Node)
+	if isnothing(f.op)
+		return
+	elseif f.op == :+
+		for arg in f.args
+			arg.derivative += f.derivative
+		end
+	elseif f.op == :- && length(f.args) == 2
+		f.args[1].derivative += f.derivative
+		f.args[2].derivative -= f.derivative
+	elseif f.op == :* && length(f.args) == 2
+		f.args[1].derivative += f.derivative * f.args[2].value
+		f.args[2].derivative += f.derivative * f.args[1].value
+	else
+		error("Operator `$(f.op)` not supported yet")
+	end
+end
 
-### Chain rule
+# ╔═╡ 26c40cf4-9585-4762-abf4-ff77342a389f
+function backward!(f::Node)
+	topo = typeof(f)[]
+	topo_sort!(Set{typeof(f)}(), topo, f)
+	reverse!(topo)
+	for node in topo
+		node.derivative = 0
+	end
+	f.derivative = 1
+	for node in topo
+		_backward!(node)
+	end
+	return f
+end
 
+# ╔═╡ 5ce7fbad-af38-4ff6-adca-b1991f3be455
+w_nodes = Node.(w)
 
-"""
+# ╔═╡ 0dd8e1bf-f8c0-4183-a5eb-13eeb5316a7b
+mse_expr = backward!(mse(Node.(ones(1)), Node.(2ones(1, 1)), Node.(3ones(1))))
+
+# ╔═╡ 7a320b75-c104-43d1-9129-f7f53910f5bc
+function reverse_diff(loss, w, X, y)
+	w_nodes = Node.(w)
+	expr = loss(w_nodes, Node.(X), Node.(y))
+	backward!(expr)
+	return [w.derivative for w in w_nodes]
+end
+
+# ╔═╡ bd012d84-a79f-4043-961e-f7825b7e0d6c
+md"`num_data` = $(@bind(num_data, Slider(1:100, default = 10, show_value = true)))"
+
+# ╔═╡ 03f6d241-712d-4a45-b926-09be326c1c7d
+md"`num_features` = $(@bind(num_features, Slider(1:100, default = 10, show_value = true)))"
+
+# ╔═╡ e9507958-cefd-4208-896e-860d3e4e9d4b
+md"`num_hidden` = $(@bind(num_hidden, Slider(1:100, default = 10, show_value = true)))"
+
+# ╔═╡ 8ce88d4d-59b0-49bb-8c0a-3a2961e5fd4a
+let
+	X = rand(num_data, num_features)
+	W1 = rand(num_features, num_hidden)
+	W2 = rand(num_hidden)
+	y = rand(num_data)
+	mse(W1, W2, X, y) = sum((X * W1 * W2 - y).^2 / length(y))
+	@time for i in axes(W1, 1)
+		for j in axes(W1, 2)
+			mse(
+			    Dual.(W1, onehot(i, axes(W1, 1)) * onehot(j, axes(W1, 2))'),
+				W2,
+				X,
+				y,
+			)
+		end
+	end
+	expr = @time mse(Node.(W1), Node.(W2), Node.(X), Node.(y))
+	@time backward!(expr)
+end;
 
 # ╔═╡ fdd28672-5902-474a-8c87-3f6f38bcf54f
 md"""
@@ -177,10 +314,27 @@ md"""
 """
 
 # ╔═╡ 54697e82-ee8c-4b65-a633-b29a47fac722
-md"### tanh"
+md"### tanh
+
+Passer un réseau de neurone avec fonction d'activation `tanh`
+"
+
+# ╔═╡ b5286a91-597d-4b66-86b2-1528708dfa93
+W2 = rand(num_hidden)
 
 # ╔═╡ 24b95ecb-0df7-4af2-9d7e-c76ce380c6a6
-md"### ReLU"
+md"### ReLU
+
+Passer un réseau de neurone avec fonction d'activation ReLU"
+
+# ╔═╡ 21b97f3d-85c8-420b-a884-df4fed98b8d0
+function relu(x)
+	if x < 0
+		return 0
+	else
+		return x
+	end
+end
 
 # ╔═╡ 73cbbbd0-8427-46d3-896b-7cfc732c35f7
 md"""
@@ -219,7 +373,7 @@ function plot_w(w = nothing)
 	else
 		x1 = range(minimum(X_table.x1), stop = maximum(X_table.x1), length = 30)
 		x2 = range(minimum(X_table.x2), stop = maximum(X_table.x2), length = 30)
-		contour!(x1, x2, (x1, x2) -> w[1] + w[2] * x1 + w[3] * x2 + w[4] * x1^2 + w[5] * x2^2 + w[6] * x1 * x2, label = "", colorbar_ticks=([1], [0.0]))
+		contour!(x1, x2, (x1, x2) -> w' * lift([x1, x2]), label = "", colorbar_ticks=([1], [0.0]))
 	end
 end
 
@@ -233,13 +387,20 @@ plot_w(w)
 X = Tables.matrix(X_table)
 
 # ╔═╡ 76c147ac-73c1-421f-9c9d-681a91e02b91
+# ╠═╡ disabled = true
+#=╠═╡
 y_est = X * w
+  ╠═╡ =#
 
 # ╔═╡ 03bc2513-e542-4ac8-8edc-8fdf3793b834
+#=╠═╡
 errors = y_est - y
+  ╠═╡ =#
 
 # ╔═╡ 0af91567-90ae-47d2-9d5a-9f33b623a204
+#=╠═╡
 mean_squared_error = sum(errors.^2) / length(errors)
+  ╠═╡ =#
 
 # ╔═╡ 96e35052-8697-495c-8ded-5f6348b7e711
 mse(w, X, y)
@@ -285,7 +446,7 @@ plot(0:num_iters, training_losses, label = "")
 plot_w(w_trained)
 
 # ╔═╡ 403f2e6c-5dec-4206-a5c0-d4a90fafc029
-X_lift = hcat(ones(size(X, 1)), X, X.^2, X[:, 1] .* X[:, 2])
+X_lift = reduce(vcat, transpose.(lift.(eachrow(X))))
 
 # ╔═╡ f56a567b-62db-43b6-8dce-db9d5ca1e348
 w_lift = rand(size(X_lift, 2))
@@ -294,7 +455,7 @@ w_lift = rand(size(X_lift, 2))
 plot_w(w_lift)
 
 # ╔═╡ d69b0cfe-ce30-420d-a891-c6e35e11cdde
-w_lift_trained, training_losses_lift = train!(forward_diff, mse, w_lift, X_lift, y, 0.2, num_iters_lift)
+w_lift_trained, training_losses_lift = train!(forward_diff, mse, w_lift, X_lift, y, η_lift, num_iters_lift)
 
 # ╔═╡ c1e29f52-424b-4cb2-814e-b4aecda86bc6
 plot(0:num_iters_lift, training_losses_lift, label = "")
@@ -310,6 +471,21 @@ plot(0:num_iters_L1, training_losses_L1, label = "")
 
 # ╔═╡ b5f3c2b1-c86a-48e4-973b-ee639d784936
 plot_w(w_trained_L1)
+
+# ╔═╡ c1b73208-f917-4823-bf45-d896f4ee59e0
+@time forward_diff(mse, w, X, y)
+
+# ╔═╡ 4444622b-ccfe-4867-b659-489573099f1e
+@time reverse_diff(mse, w, X, y)
+
+# ╔═╡ 0af6bce6-bc3b-438e-a57b-0c0c6586c0c5
+W1 = rand(size(X, 2), num_hidden)
+
+# ╔═╡ c3442bea-4ba9-4711-8d70-0ddd1745dd58
+y_est_tanh = tanh.(X * W1) * W2
+
+# ╔═╡ 83180cd9-21b1-4e70-8d54-4bf03efa31be
+y_est_relu = relu.(X * W1) * W2
 
 # ╔═╡ a05e3426-f014-473c-aad1-1cc6351a8911
 W = rand(size(X, 2), size(Y, 2))
@@ -2146,9 +2322,11 @@ version = "1.4.1+1"
 # ╠═56558e41-e3ae-42e5-8695-3d2077cbc10c
 # ╠═c1059a32-8d65-4957-989f-2c5b5f50eb81
 # ╟─b1aa765e-7a6b-4ab4-af83-ab3d30497866
+# ╠═a767d45f-a438-4d87-bdab-7d55ea7458ac
 # ╠═403f2e6c-5dec-4206-a5c0-d4a90fafc029
 # ╠═f56a567b-62db-43b6-8dce-db9d5ca1e348
 # ╠═b4b31659-8dc9-4837-8a6f-8d40b41b2366
+# ╟─f71923d4-fbc9-4ce6-b5be-a00437c3651d
 # ╟─18edd949-ce86-431a-a19b-4daf526e57a6
 # ╠═d69b0cfe-ce30-420d-a891-c6e35e11cdde
 # ╠═c1e29f52-424b-4cb2-814e-b4aecda86bc6
@@ -2161,10 +2339,30 @@ version = "1.4.1+1"
 # ╠═91e5840a-8a18-4d36-8fce-510af4c7dcf2
 # ╠═4a807c44-f33e-4a58-99b3-261c392be891
 # ╠═b5f3c2b1-c86a-48e4-973b-ee639d784936
-# ╠═613269ef-16ba-44ef-ad8e-997cc9aec1fb
+# ╟─613269ef-16ba-44ef-ad8e-997cc9aec1fb
+# ╠═4931adf1-8771-4708-833e-d05c05884969
+# ╠═b814dc16-37de-45d1-9c7c-4eec45d3f956
+# ╟─cf81d0e0-4268-4ce5-82c5-8eca1e410233
+# ╠═86872f35-d62d-40e5-8770-4585d3b0c0d7
+# ╠═1e08b49d-03fe-4fb3-a8ba-3a00e1374b32
+# ╠═26c40cf4-9585-4762-abf4-ff77342a389f
+# ╠═5ce7fbad-af38-4ff6-adca-b1991f3be455
+# ╠═0dd8e1bf-f8c0-4183-a5eb-13eeb5316a7b
+# ╠═7a320b75-c104-43d1-9129-f7f53910f5bc
+# ╠═c1b73208-f917-4823-bf45-d896f4ee59e0
+# ╠═4444622b-ccfe-4867-b659-489573099f1e
+# ╟─bd012d84-a79f-4043-961e-f7825b7e0d6c
+# ╟─03f6d241-712d-4a45-b926-09be326c1c7d
+# ╟─e9507958-cefd-4208-896e-860d3e4e9d4b
+# ╠═8ce88d4d-59b0-49bb-8c0a-3a2961e5fd4a
 # ╟─fdd28672-5902-474a-8c87-3f6f38bcf54f
 # ╟─54697e82-ee8c-4b65-a633-b29a47fac722
+# ╠═0af6bce6-bc3b-438e-a57b-0c0c6586c0c5
+# ╠═b5286a91-597d-4b66-86b2-1528708dfa93
+# ╠═c3442bea-4ba9-4711-8d70-0ddd1745dd58
 # ╟─24b95ecb-0df7-4af2-9d7e-c76ce380c6a6
+# ╠═21b97f3d-85c8-420b-a884-df4fed98b8d0
+# ╠═83180cd9-21b1-4e70-8d54-4bf03efa31be
 # ╟─73cbbbd0-8427-46d3-896b-7cfc732c35f7
 # ╠═f90fd2b4-7aec-40f5-85b7-00674582a902
 # ╠═a05e3426-f014-473c-aad1-1cc6351a8911
