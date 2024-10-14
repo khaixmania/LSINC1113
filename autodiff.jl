@@ -142,7 +142,15 @@ md"`η_lift` = $(@bind η_lift Slider(exp10.(-4:0.25:1), default=1, show_value =
 md"`num_iters_lift` = $(@bind num_iters_lift Slider(1:200, default=10, show_value = true))"
 
 # ╔═╡ dc4feb58-d2cf-4a97-aaed-7f4593fc9732
-md"### L1 norm"
+md"""
+### L1 norm
+
+La fonction ``|x|`` n'est pas différentiable lorsque ``x = 0``.
+Si on s'approche par la gauche (c'est à dire ``x < 0``, la fonction est ``-x``) donc la dérivée vaut ``-1``.
+Si on s'approche par la droite (c'est à dire ``x > 0``, la fonction est ``x``) donc la dérivée vaut ``1``.
+Il n'y a pas de gradient valide!
+Par contre, n'importe quel nombre entre ``-1`` et ``1`` est un **subgradient** valide ! Alors que le gradient est la normale à la tangente **unique**, le subgradient est un élément du **cone tangent**.
+"""
 
 # ╔═╡ f5749121-8e75-45de-95b9-63fff584e350
 md"`η_L1` = $(@bind η_L1 Slider(exp10.(-4:0.25:1), default=1, show_value = true))"
@@ -211,6 +219,16 @@ function Base.abs(d::Dual)
 	else
 		return d
 	end
+end
+
+# ╔═╡ 607000ef-fb7f-4204-b543-3cb6bb75ed71
+let
+	x = range(-1, stop = 1, length = 11)
+	p = plot(x, abs, axis = :equal, label = "|x|")
+	for λ in range(0, stop = 1, length = 11)
+		plot!([0, λ/2 - (1 - λ)/2], [0, -1/2], arrow = Plots.arrow(:closed), label = "")
+	end
+	p
 end
 
 # ╔═╡ b899a93f-9bec-48ce-b0ad-4e5157556a31
@@ -2332,6 +2350,7 @@ version = "1.4.1+1"
 # ╠═c1e29f52-424b-4cb2-814e-b4aecda86bc6
 # ╠═7606f18e-9833-48cd-8c21-b48be30ef6f8
 # ╟─dc4feb58-d2cf-4a97-aaed-7f4593fc9732
+# ╠═607000ef-fb7f-4204-b543-3cb6bb75ed71
 # ╠═b899a93f-9bec-48ce-b0ad-4e5157556a31
 # ╠═42644265-8f26-4118-9e8f-537078847af7
 # ╟─f5749121-8e75-45de-95b9-63fff584e350
