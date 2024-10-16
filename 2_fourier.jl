@@ -461,103 +461,6 @@ begin
 	end
 end
 
-# ╔═╡ 1dfad36a-05a5-4108-8c67-d4c866be89c0
-HTMLTag(
-	"details",
-	Join(
-		HTMLTag("summary", html"Quel est la complexité de la convolution vs produit classique s'ils sont discrets de longueur n ?"),
-		md"Convolution: ``\Theta(n^2)``, produit classique: ``\Theta(n)``. On verra que la complexité de la FFT est ``\Theta(n \log(n))`` donc ``f \ast g`` a une complexité de ``\Theta(n^2)`` et ``\mathcal{F}^{-1}(\mathcal{F}(f) \cdot \mathcal{F}(g))`` a une complexité de ``\Theta(n + 3n \log(n)) = \Theta(n\log(n))`` ce qui est plus rapide pour un nombre ``n`` suffisamment grand.",
-	),
-)
-
-# ╔═╡ 13d00d91-dae3-451c-924a-6b120c0a605d
-HTMLTag(
-	"details",
-	Join(
-		HTMLTag("summary", html"Pourquoi obtient-on le même résultat avec la convolution et la cross-corrélation ?"),
-		md"Parce que la gaussienne est symmétrique !",
-	),
-)
-
-# ╔═╡ 87dbf272-1d03-4f9e-b7e1-9b76197b0a83
-HTMLTag(
-	"details",
-	Join(
-		HTMLTag("summary", html"Comment utiliser cela pour calculer le produit de grand nombres ?"),
-		md"Un nombre représenté par les chiffres ``a_na_{n-1}\cdots a_1a_0`` est égal à ``a_n 10^n + a_{n-1} 10^{n-1} + \cdots + a_1 10 + a_0`` ou encore ``p(10)`` où ``p(x) = a_n x^n + a_{n-1} x^{n-1} + \cdots + a_1 x + a_0``. Le produit de nombre peut donc être calculé via un produit de polynôme!",
-	),
-)
-
-# ╔═╡ 3524f1bf-8e39-4d04-9dc3-e434e65db409
-HTMLTag(
-	"details",
-	Join(
-		HTMLTag("summary", html"Que vaut la distance entre deux valeurs successive en temporel et en fréquentiel pour les signaux discrets ?"),
-		md"""
-L'échelle temporelle ou fréquentielle n'est pas contenue dans ``X_k`` ou ``x_n``.
-Par contre, elles sont étroitement liées. On a
-```math
-\frac{k}{N}n = \frac{k}{N\Delta t} n\Delta t
-```
-Si on décide que l'écart temporel entre ``x_n`` et ``x_{n+1}`` est ``\Delta t``, on a ``t = n\Delta t``. Il faut alors que ``\xi = \frac{k}{N\Delta t}`` et donc l'écart fréquentiel entre ``X_k`` et ``X_{k+1}`` est ``\frac{1}{N\Delta t}``.
-""",
-	),
-)
-
-# ╔═╡ 57373c5b-a34a-4e48-af42-27a0bd05a173
-HTMLTag(
-	"details",
-	Join(
-		HTMLTag("summary", html"Que vaut le signal en dehors de ses N points ?"),
-		md"""On a
-```math
-\begin{align}
-  X_{k + N} & = \sum_{n=0}^{N-1} x_n e^{-i 2\pi \frac{(k + N)}{N} n}\\
-  & = \sum_{n=0}^{N-1} x_n e^{-i 2\pi \frac{k}{N} n} e^{-i2\pi n}\\
-  & = \sum_{n=0}^{N-1} x_n e^{-i 2\pi \frac{k}{N} n}\\
-  & = X_k
-\end{align}
-```
-Le signal est donc périodique !
-Plus précisément, la discrétisation en temporelle rend le signal fréquentiel périodique et la discrétisation en fréquentiel rend le signal temporel périodique.
-""",
-	),
-)
-
-# ╔═╡ b915e8c7-bc11-4f3f-88f0-a82dfe447643
-HTMLTag(
-	"details",
-	Join(
-		HTMLTag("summary", html"Que va-t-il advenir de la deuxième moitié du signal ?"),
-		md"""
-Le nouveau signal de `0` à `t_max/2` sera la somme du signal de `0` à `t_max/2` et du signal de `t_max/2` à `t_max`.
-""",
-	),
-)
-
-# ╔═╡ ae2adccf-edfc-4cba-97d8-b440946c9b69
-HTMLTag(
-	"details",
-	Join(
-		HTMLTag("summary", html"Qu'observe-t-on dans la matrice ci-dessous ?"),
-		md"""
-La partie mauve et bleue sont égales. La partie rouge est l'opposée de la partie verte.
-""",
-	),
-)
-
-# ╔═╡ 7c96fc08-da4a-48e6-a43e-cd24c9aaef42
-HTMLTag(
-	"details",
-	Join(
-		HTMLTag("summary", html"Qu'observe-t-on en comparant cela à la matrice 2 fois plus petite ?"),
-		md"""
-Les parties mauve et bleue sont égale à `F(N ÷ 2)`.
-La ligne `k` (en commençant à `k = 1`) est une rotation de ``2\pi(k-1)/N`` radians (donc une multiplication par ``z^{-(k-1)}``) par rapport à `F(N ÷ 2)`.
-""",
-	),
-)
-
 # ╔═╡ 0e9e8c6e-83ff-4c4c-b9d1-19a0593a3cba
 f(i, j, n) = cispi(-2 * i * j / n)
 
@@ -656,6 +559,84 @@ let
 	end
 	p
 end
+
+# ╔═╡ b0a265b8-e3fd-4a6c-b813-904d18ea83e7
+function qa(question, answer)
+	return HTMLTag("details", Join(HTMLTag("summary", question), answer))
+end
+
+# ╔═╡ 1dfad36a-05a5-4108-8c67-d4c866be89c0
+qa(
+	html"Quel est la complexité de la convolution vs produit classique s'ils sont discrets de longueur n ?",
+	md"Convolution: ``\Theta(n^2)``, produit classique: ``\Theta(n)``. On verra que la complexité de la FFT est ``\Theta(n \log(n))`` donc ``f \ast g`` a une complexité de ``\Theta(n^2)`` et ``\mathcal{F}^{-1}(\mathcal{F}(f) \cdot \mathcal{F}(g))`` a une complexité de ``\Theta(n + 3n \log(n)) = \Theta(n\log(n))`` ce qui est plus rapide pour un nombre ``n`` suffisamment grand.",
+)
+
+# ╔═╡ 13d00d91-dae3-451c-924a-6b120c0a605d
+qa(
+	html"Pourquoi obtient-on le même résultat avec la convolution et la cross-corrélation ?",
+	md"Parce que la gaussienne est symmétrique !",
+)
+
+# ╔═╡ 87dbf272-1d03-4f9e-b7e1-9b76197b0a83
+qa(
+	html"Comment utiliser cela pour calculer le produit de grand nombres ?",
+	md"Un nombre représenté par les chiffres ``a_na_{n-1}\cdots a_1a_0`` est égal à ``a_n 10^n + a_{n-1} 10^{n-1} + \cdots + a_1 10 + a_0`` ou encore ``p(10)`` où ``p(x) = a_n x^n + a_{n-1} x^{n-1} + \cdots + a_1 x + a_0``. Le produit de nombre peut donc être calculé via un produit de polynôme!",
+)
+
+# ╔═╡ 3524f1bf-8e39-4d04-9dc3-e434e65db409
+qa(
+	html"Que vaut la distance entre deux valeurs successive en temporel et en fréquentiel pour les signaux discrets ?",
+	md"""
+L'échelle temporelle ou fréquentielle n'est pas contenue dans ``X_k`` ou ``x_n``.
+Par contre, elles sont étroitement liées. On a
+```math
+\frac{k}{N}n = \frac{k}{N\Delta t} n\Delta t
+```
+Si on décide que l'écart temporel entre ``x_n`` et ``x_{n+1}`` est ``\Delta t``, on a ``t = n\Delta t``. Il faut alors que ``\xi = \frac{k}{N\Delta t}`` et donc l'écart fréquentiel entre ``X_k`` et ``X_{k+1}`` est ``\frac{1}{N\Delta t}``.
+""",
+)
+
+# ╔═╡ 57373c5b-a34a-4e48-af42-27a0bd05a173
+qa(
+	html"Que vaut le signal en dehors de ses N points ?",
+	md"""On a
+```math
+\begin{align}
+  X_{k + N} & = \sum_{n=0}^{N-1} x_n e^{-i 2\pi \frac{(k + N)}{N} n}\\
+  & = \sum_{n=0}^{N-1} x_n e^{-i 2\pi \frac{k}{N} n} e^{-i2\pi n}\\
+  & = \sum_{n=0}^{N-1} x_n e^{-i 2\pi \frac{k}{N} n}\\
+  & = X_k
+\end{align}
+```
+Le signal est donc périodique !
+Plus précisément, la discrétisation en temporelle rend le signal fréquentiel périodique et la discrétisation en fréquentiel rend le signal temporel périodique.
+""",
+)
+
+# ╔═╡ b915e8c7-bc11-4f3f-88f0-a82dfe447643
+qa(
+	html"Que va-t-il advenir de la deuxième moitié du signal ?",
+	md"""
+Le nouveau signal de `0` à `t_max/2` sera la somme du signal de `0` à `t_max/2` et du signal de `t_max/2` à `t_max`.
+""",
+)
+
+# ╔═╡ ae2adccf-edfc-4cba-97d8-b440946c9b69
+qa(
+	html"Qu'observe-t-on dans la matrice ci-dessous ?",
+	md"""
+La partie mauve et bleue sont égales. La partie rouge est l'opposée de la partie verte.
+""",
+)
+
+# ╔═╡ 7c96fc08-da4a-48e6-a43e-cd24c9aaef42
+qa(
+	html"Qu'observe-t-on en comparant cela à la matrice 2 fois plus petite ?",
+	md"""
+Les parties mauve et bleue sont égale à `F(N ÷ 2)`.
+La ligne `k` (en commençant à `k = 1`) est une rotation de ``2\pi(k-1)/N`` radians (donc une multiplication par ``z^{-(k-1)}``) par rapport à `F(N ÷ 2)`.
+""",
+)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2751,5 +2732,6 @@ version = "1.4.1+1"
 # ╠═0d9e0a31-b229-4d06-92c9-0136404399da
 # ╠═f80595c3-6bbb-4b62-b03b-1c80cecaf7f9
 # ╠═792723a3-0011-422e-bbf4-798624913780
+# ╠═b0a265b8-e3fd-4a6c-b813-904d18ea83e7
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
