@@ -106,7 +106,7 @@ plot(eachindex(losses), losses, label = "")
 
 # Cross entropy
 function softmax(x)
-    exps = exp.(x .- maximum(x))
+    exps = exp.(x .- maximum(x, dims = 2))
     # Le -max(x) est utilisé dans la fonction softmax pour éviter les problèmes 
     # d'instabilité numérique lorsque les entrées sont grandes. Cela améliore la 
     # stabilité des calculs sans affecter les résultats finaux.
