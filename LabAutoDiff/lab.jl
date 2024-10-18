@@ -20,6 +20,7 @@ function random_moon(num_data; noise = 0.1)
 end
 X, y = random_moon(num_data)
 
+using Colors
 function plot_moon(model, W, X, y)
 	col = [Colors.JULIA_LOGO_COLORS.red, Colors.JULIA_LOGO_COLORS.blue]
 	scatter(X[:, 1], X[:, 2], markerstrokewidth=0, color = col[round.(Int, (3 .+ y) / 2)], label = "")
