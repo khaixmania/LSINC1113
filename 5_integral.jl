@@ -164,43 +164,174 @@ On peut maintenant dérouler le calcul de l'intégration:
 
 # ╔═╡ 5b54b89b-09cc-4dbe-872e-b241bae147eb
 md"""
-**Point d'attention** Faites attention au sens de l'intégral ! La borne inférieur doit toujours être supérieure à la borne supérieure. Ici, ``1 - 1/x`` est supérieur à ``0`` car ``x`` est supérieur à ``1`` donc ``1 - 1/x`` est bien la borne supérieure. Si les bornes ne sont pas mises dans le bon sens, on obtient l'opposé de l'intégral qu'on cherche à calculer ! Pour être sûr de ne pas vous tromper, faites le dessin et en vérifiez que les flèches vont bien dans le sens de ``x`` (resp. ``y``) croissant.
+### Point d'attention
+
+#### Bornes dans le mauvais sens
+
+Faites attention au sens de l'intégral ! La borne inférieur doit toujours être inférieure à la borne supérieure. Ici, ``1 - 1/x`` est supérieur à ``0`` car ``x`` est supérieur à ``1`` donc ``1 - 1/x`` est bien la borne supérieure. Si les bornes ne sont pas mises dans le bon sens, on obtient l'opposé de l'intégral qu'on cherche à calculer ! Pour être sûr de ne pas vous tromper, faites le dessin et en vérifiez que les flèches vont bien dans le sens de ``x`` (resp. ``y``) croissant. Par exemple, si on met ``1 - 1/x`` comme borne inférieure et ``0`` comme borne supérieure, ça revient à mettre les flèches comme dans le dessin ci-dessous. On voit que les flèches vont vers le bas, ce qui correspond à un sens décrossant pour ``x``, ce qui indique que les bornes sont dan sle mauvais sens !
+"""
+
+# ╔═╡ 21fcbf6d-f48b-4c55-a5c2-c27e8126f691
+md"""
+#### Mauvais côté de la courbe
+
+Il faut également faire attention à sélectionner les bonnes bornes. La variables ``y`` a initialement comme bornes ``0`` et ``1/2``. Si on prend ``1/2`` comme borne,
+l'intégrale qu'on fait correspond au dessin ci-dessous.
+"""
+
+# ╔═╡ ceb1ef2c-2630-447c-a867-5e237e951d57
+md"""
+On voit que les flèches ne sont pas du même côté de la courbe par rapport à l'intégrale initiale. Ces bornes ne calculent donc pas la bonne intégrale!
+"""
+
+# ╔═╡ 1e663c6f-e6bb-4bb6-bfec-d3b000c4587b
+md"""
+#### Fonction non-injective
+
+Lorsqu'on change l'ordre des intégrales, il faut inverser la formule pour avoir l'expression de ``y`` en fonction de ``x`` depuis l'expression de ``x`` en fonction de ``y``. Si la fonction n'est pas injective, elle n'a pas d'inverse unique, que faire ?
+
+Il faut alors décomposer l'intégrale en plusieurs sous-intégrales pour lesquelles la fonction est injective quand elle est restreinte à chaque sous-interval.
+Prenons comme exemple l'intégrale:
+```math
+\int_{x=-2}^2 \int_{y=x^2}^4 f(x, y) \,\text{d}y\,\text{d}x
+```
+Le dessin correspondant est:
+"""
+
+# ╔═╡ 24ab9695-7c29-4b80-8042-7ddb0da3461c
+md"""
+La fonction ``y = x^2`` n'est pas inversible car il y a deux inverses, on a ``x = \pm\sqrt{y}``. Si on restricte la fonction pour ``x < 0``, on a alors l'inverse unique ``x = -\sqrt{y}``. On a donc
+```math
+\int_{x=-2}^0 \int_{y=x^2}^4 f(x, y) \,\text{d}y\,\text{d}x
+=
+\int_{y=0}^2 \int_{x=-\sqrt{y}}^0 f(x, y) \,\text{d}x\,\text{d}y
+```
+"""
+
+# ╔═╡ c7ade42d-3614-4005-8686-380821ee6866
+md"""
+Similairement, si on restricte la fonction pour ``x \ge 0``, on a l'inverse unique ``x = \sqrt{y}``. On a donc
+```math
+\int_{x=0}^2 \int_{y=x^2}^4 f(x, y) \,\text{d}y\,\text{d}x
+=
+\int_{y=0}^2 \int_{x=0}^{\sqrt{y}} f(x, y) \,\text{d}x\,\text{d}y
+```
+"""
+
+# ╔═╡ a5721593-f068-4fe4-a01a-3272c746d7b7
+md"""
+On peut alors combiner les deux pour donner l'intégrale de ``-2`` à ``2``.
+Dans ce cas particulier, on peut en fait recombiner les 2 intégrales finales pour avoir une seule intégrale:
+```math
+\begin{align}
+\int_{x=-2}^2 \int_{y=x^2}^4 f(x, y) \,\text{d}y\,\text{d}x
+& =
+\int_{x=-2}^0 \int_{y=x^2}^4 f(x, y) \,\text{d}y\,\text{d}x +
+\int_{x=0}^2 \int_{y=x^2}^4 f(x, y) \,\text{d}y\,\text{d}x\\
+& =
+\int_{y=0}^2 \int_{x=-\sqrt{y}}^0 f(x, y) \,\text{d}x\,\text{d}y
++
+\int_{y=0}^2 \int_{x=0}^{\sqrt{y}} f(x, y) \,\text{d}x\,\text{d}y\\
+& =
+\int_{y=0}^2 \int_{x=-\sqrt{y}}^{\sqrt{y}} f(x, y) \,\text{d}x\,\text{d}y
+\end{align}
+```
+"""
+
+# ╔═╡ 29c71793-c359-4363-875d-9e00fcff324a
+md"""
+Il se peut aussi qu'on ne puisse pas combiner les intégrales obtenues après avoir été séparées. Par exemple:
+```math
+\begin{align}
+\int_{x=-2}^2 \int_{y=0}^{x^2} f(x, y) \,\text{d}y\,\text{d}x
+& =
+\int_{x=-2}^0 \int_{y=0}^{x^2} f(x, y) \,\text{d}y\,\text{d}x +
+\int_{x=0}^2 \int_{y=0}^{x^2} f(x, y) \,\text{d}y\,\text{d}x\\
+& =
+\int_{y=0}^2 \int_{x=-2}^{-\sqrt{y}} f(x, y) \,\text{d}x\,\text{d}y
++
+\int_{y=0}^2 \int_{x=\sqrt{y}}^2 f(x, y) \,\text{d}x\,\text{d}y
+\end{align}
+```
+Les dessins correspondants sont:
 """
 
 # ╔═╡ 234efaaa-0906-4e2a-9a06-aeec91fbe9ef
 md"## Utilitaires"
 
-# ╔═╡ 9555522d-ce69-4ba1-8ae4-e9d55ddb6dfe
-red, green, blue, purple = Colors.JULIA_LOGO_COLORS
-
-# ╔═╡ c03f48f1-b957-4700-bbb2-2508e39f8f85
-let
-	gr()
-	y = range(0, 0.5, length = 16)
-	x = 1 ./ (1 .- y)
-	p = plot(x, y, ratio = :equal, label = "", color = blue)
-	plot!([2, 2], [0, 0.5], label = "", color = blue)
-	for y in y
-		plot!([1 / (1 - y), 2], _ -> y, label = "", color = blue, arrow = (:closed, 1.0))
-	end
-	p
-end
-
-# ╔═╡ 67118f0e-128f-4806-9446-36cc708837b2
-let
-	gr()
-	x = range(1, 2, length = 16)
-	y = 1 .- 1 ./ x
-	p = plot(x, y, ratio = :equal, label = "", color = blue)
-	plot!([1, 2], [0, 0], label = "", color = blue)
-	for x in x
-		plot!([x, x], [0, 1 - 1/x], label = "", color = blue, arrow = (:closed, 1.0))
-	end
-	p
-end
-
 # ╔═╡ 872bd97a-a265-4fc4-8785-f48be67f557d
 import PlotlyBase, PlotlyKaleido
+
+# ╔═╡ c6cfba83-d68c-4696-b0ee-e6256baa7549
+_apply(x::Function, y) = x.(y)
+
+# ╔═╡ b0ea40ff-7933-4936-ae61-7c7a32ad84a4
+_apply(x::Real, _) = x
+
+# ╔═╡ 382f30d4-80d0-4587-85e5-ecdda7d1d0cd
+function dessin(xinf, xsup, yinf, ysup; length = 16, color = Colors.JULIA_LOGO_COLORS.blue)
+	gr()
+	p = plot(ratio = :equal)
+	if xinf isa Real && xsup isa Real
+		x = range(xinf, stop = xsup; length)
+		for y in [yinf, ysup]
+			if y isa Function
+				plot!(x, y.(x); label = "", color)
+			else
+				plot!([xinf, xsup], [y, y]; label = "", color)
+			end
+		end
+		for x in x
+			plot!([x, x], [_apply(yinf, x), _apply(ysup, x)]; label = "", color, arrow = (:closed, 1.0))
+		end
+	elseif yinf isa Real && ysup isa Real
+		y = range(yinf, stop = ysup; length)
+		for x in [xinf, xsup]
+			if x isa Function
+				plot!(x.(y), y; label = "", color)
+			else
+				plot!([x, x], [yinf, ysup]; label = "", color)
+			end
+		end
+		for y in y
+			plot!([_apply(xinf, y), _apply(xsup, y)], [y, y]; label = "", color, arrow = (:closed, 1.0))
+		end
+	end
+	return p
+end
+
+# ╔═╡ c03f48f1-b957-4700-bbb2-2508e39f8f85
+dessin(y -> 1 / (1 - y), 2, 0, 0.5)
+
+# ╔═╡ 67118f0e-128f-4806-9446-36cc708837b2
+dessin(1, 2, 0, x -> 1 - 1/x)
+
+# ╔═╡ 029c8382-0f68-4c64-90aa-d8466fa21463
+dessin(1, 2, x -> 1 - 1/x, 0)
+
+# ╔═╡ 9a9db9ac-a0fb-4235-8b52-95c1895bddea
+dessin(1, 2, x -> 1 - 1/x, 0.5)
+
+# ╔═╡ c9020f59-ea76-46b5-918a-98c5970c0f6c
+dessin(-2, 2, x -> x^2, 4)
+
+# ╔═╡ 2524c01a-b813-4b9d-b2c3-91fdd6634c41
+dessin(y -> -√y, 0, 0, 4)
+
+# ╔═╡ 054a4c66-893c-47bf-a07d-ae2d4210e7d3
+dessin(0, y -> √y, 0, 4)
+
+# ╔═╡ 56cda0a6-f43d-43ec-b864-6076aaa28a0c
+dessin(y -> -√y, y -> √y, 0, 4)
+
+# ╔═╡ 920374f2-dab8-46a4-b6f7-8fea7664b47f
+dessin(-2, 2, 0, x -> x^2)
+
+# ╔═╡ 9d923110-2b2a-4c83-a0ca-a91b5b47f6fd
+dessin(-2, y -> -√y, 0, 4)
+
+# ╔═╡ 6b3ae83f-342b-4724-8bc6-0d7b85aefc01
+dessin(y -> √y, 2, 0, 4)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1385,9 +1516,27 @@ version = "1.4.1+1"
 # ╠═67118f0e-128f-4806-9446-36cc708837b2
 # ╟─79533bc7-93d2-4e02-ba8e-7e58f50cab08
 # ╟─5b54b89b-09cc-4dbe-872e-b241bae147eb
+# ╠═029c8382-0f68-4c64-90aa-d8466fa21463
+# ╟─21fcbf6d-f48b-4c55-a5c2-c27e8126f691
+# ╠═9a9db9ac-a0fb-4235-8b52-95c1895bddea
+# ╟─ceb1ef2c-2630-447c-a867-5e237e951d57
+# ╟─1e663c6f-e6bb-4bb6-bfec-d3b000c4587b
+# ╠═c9020f59-ea76-46b5-918a-98c5970c0f6c
+# ╟─24ab9695-7c29-4b80-8042-7ddb0da3461c
+# ╠═2524c01a-b813-4b9d-b2c3-91fdd6634c41
+# ╟─c7ade42d-3614-4005-8686-380821ee6866
+# ╠═054a4c66-893c-47bf-a07d-ae2d4210e7d3
+# ╟─a5721593-f068-4fe4-a01a-3272c746d7b7
+# ╠═56cda0a6-f43d-43ec-b864-6076aaa28a0c
+# ╟─29c71793-c359-4363-875d-9e00fcff324a
+# ╠═920374f2-dab8-46a4-b6f7-8fea7664b47f
+# ╠═9d923110-2b2a-4c83-a0ca-a91b5b47f6fd
+# ╠═6b3ae83f-342b-4724-8bc6-0d7b85aefc01
 # ╟─234efaaa-0906-4e2a-9a06-aeec91fbe9ef
 # ╠═2ebca4fb-28db-485d-a44e-b21f42c7d474
-# ╠═9555522d-ce69-4ba1-8ae4-e9d55ddb6dfe
 # ╠═872bd97a-a265-4fc4-8785-f48be67f557d
+# ╠═c6cfba83-d68c-4696-b0ee-e6256baa7549
+# ╠═b0ea40ff-7933-4936-ae61-7c7a32ad84a4
+# ╠═382f30d4-80d0-4587-85e5-ecdda7d1d0cd
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
