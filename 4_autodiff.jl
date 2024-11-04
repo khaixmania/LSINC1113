@@ -208,7 +208,72 @@ Le désavantage de la forward differentiation, c'est qu'il faut recommencer tout
 
 ### Chain rule
 
-Prenons un example, supposons qu'on veuille calculer le gradient de la fonction ``f(g(h(x_1, x_2)))`` qui compose 3 fonctions ``f``, ``g`` et ``h``.
+#### Exemple univarié
+
+Commençons par un exemple univarié pour introduire le fait qu'il existe un choix dans l'ordre de la multiplication des dérivées. La liberté introduite par ce choix donne lieu à la différence entre la différentiation *forward* et *reverse*.
+
+Supposions qu'on veuille dériver la fonction ``\tan(\cos(\sin(x)))`` pour ``x = \pi/3``. La Chain Rule nous donne:
+```math
+\begin{align}
+  (\tan(\cos(\sin(x))))'
+  & = \left. (\tan(x))' \right|_{x = \cos(\sin(x)))} (\cos(\sin(x))))'\\
+  & = \left. (\tan(x))' \right|_{x = \cos(\sin(x)))}
+  \left. (\cos(x))' \right|_{x = \sin(x))}
+  (\sin(x)))'\\
+  & = \frac{1}{\cos^2(\cos(\sin(x)))} (-\sin(\sin(x))) \cos(x)
+\end{align}
+```
+La dérivée pour ``x = \pi/3`` est donc:
+```math
+\begin{align}
+\left. (\tan(\cos(\sin(x))))' \right|_{x = \pi/3}
+& =
+\left. (\tan(x))' \right|_{x = \cos(\sin(\pi/3)))}
+\left. (\cos(x))' \right|_{x = \sin(\pi/3))}
+\left. (\sin(x)))' \right|_{x = \pi/3}\\
+& = \frac{1}{\cos^2(\cos(\sin(\pi/3)))} (-\sin(\sin(\pi/3))) \cos(\pi/3)
+\end{align}
+```
+Pour calculer ce produit de 3 nombres, on a 2 choix.
+
+La première possibilité (qui correspond à forward diff) est de commencer par calculer le produit
+```math
+\begin{align}
+\left. (\cos(\sin(x)))' \right|_{x = \pi/3}
+& =
+\left. (\cos(x))' \right|_{x = \sin(\pi/3))}
+\left. (\sin(x)))' \right|_{x = \pi/3}\\
+& =
+(-\sin(\sin(\pi/3))) \cos(\pi/3)
+\end{align}
+```
+puis de le multiplier avec ``\left. (\tan(x))' \right|_{x = \cos(\sin(\pi/3)))} = \frac{1}{\cos^2(\cos(\sin(\pi/3)))}``.
+
+La deuxième possibilité (qui correspond à reverse diff) est de commencer par calculer le produit
+```math
+\begin{align}
+\left. (\tan(\cos(x)))' \right|_{\textcolor{red}{x = \sin(\pi/3)}}
+& =
+\left. (\tan(x))' \right|_{\textcolor{red}{x = \cos(\sin(\pi/3)))}}
+\left. (\cos(x))' \right|_{\textcolor{red}{x = \sin(\pi/3))}}\\
+& = \frac{1}{\cos^2(\cos(\sin(\pi/3)))} (-\sin(\sin(\pi/3)))
+\end{align}
+```
+puis de le multiplier avec ``\cos(\pi/3)``.
+
+Vous remarquerez que dans l'équation ci-dessus, comme mis en évidence en rouge, les valeurs auxquelles les dérivées doivent être évaluées dépendent de ``\sin(\pi/3)``.
+L'approche utilisée par reverse diff de multiplier de gauche à droite ne peut donc pas être effectuer sans prendre en compte la valeur qui doit être évaluée de droite à gauche.
+
+Pour appliquer reverse diff, il faut donc commencer par une *forward pass* de droite à gauche qui calcule ``\sin(\pi/3)`` puis ``\cos(\sin(\pi/3))`` puis ``\tan(\cos(\sin(\pi/3)))``. On peut ensuite faire la *backward pass* qui multipliée les dérivée de gauche à droite. Afin d'être disponibles pour la backward pass, les valeurs calculées lors de la forward pass doivent être **stockées** ce qui implique un **coût mémoire**.
+En revanche, comme forward diff calcule la dérivée dans le même sens que l'évaluation, les dérivées et évaluations peuvent être calculées en même temps afin de ne pas avoir besoin de stocker les évaluations. C'est effectivement ce qu'on a implémenter avec `Dual` précédemment.
+
+Au vu de ce coût mémoire supplémentaire de reverse diff par rapport à forward diff,
+ce dernier paraît préférable en pratique.
+On va voir maintenant que dans le cas multivarié, dans certains cas, ce désavantage est contrebalancé par une meilleure complexité temporelle qui rend reverse diff indispensable!
+
+#### Exemple multivarié
+
+Prenons maintenant un example multivarié, supposons qu'on veuille calculer le gradient de la fonction ``f(g(h(x_1, x_2)))`` qui compose 3 fonctions ``f``, ``g`` et ``h``.
 Le gradient est obtenu via la chain rule comme suit:
 ```math
 \begin{align}
@@ -298,7 +363,7 @@ L'idée de reverse diff c'est d'effectuer le produit de gauche à droite:
 # ╔═╡ 4e1ac5fc-c684-42e1-9c99-3120021eb19a
 md"""
 Pour calculer ``\partial f / \partial x_1`` via forward diff, on part donc de ``\partial x_1 / \partial x_1 = 1`` et ``\partial x_2 / \partial x_1 = 0`` et on calcule ensuite ``\partial h / \partial x_1``, ``\partial g / \partial x_1`` puis ``\partial f / \partial x_1``.
-Effectuer la reverse diff est un peu moins intuitif. L'idée est de partir de la dérivée du résultat par rapport à lui même ``\partial f / \partial f = 1`` et de calculer ``\partial f / \partial g`` puis ``\partial f / \partial h`` et ensuite ``\partial f / \partial x_1``. L'avantage c'est que ``\partial f / \partial x_2`` et facile à obtenir maintenant qu'on a calculé ``\partial f / \partial h``! Reverse diff est donc plus efficace pour calculer le gradient d'une fonction qui a une seul output par rapport à beaucoup de paramètres comme détaillé dans la discussion à la fin de ce notebook.
+Effectuer la reverse diff est un peu moins intuitif. L'idée est de partir de la dérivée du résultat par rapport à lui même ``\partial f / \partial f = 1`` et de calculer ``\partial f / \partial g`` puis ``\partial f / \partial h`` et ensuite ``\partial f / \partial x_1``. L'avantage de reverse diff c'est qu'il n'y a que la dernière étape qui est sécifique à ``x_1``. Tout jusqu'au calcul de ``\partial f / \partial h`` peut être réutilisé pour calculer ``\partial f / \partial x_2``, il n'y a plus cas multiplier ! Reverse diff est donc plus efficace pour calculer le gradient d'une fonction qui a une seul output par rapport à beaucoup de paramètres comme détaillé dans la discussion à la fin de ce notebook.
 """
 
 # ╔═╡ 56b32132-113f-459f-b1d9-abb8f439a40b
