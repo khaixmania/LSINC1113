@@ -263,7 +263,7 @@ md"## Utilitaires"
 import PlotlyBase, PlotlyKaleido
 
 # ╔═╡ c6cfba83-d68c-4696-b0ee-e6256baa7549
-_apply(x::Function, y) = x.(y)
+_apply(x::Function, y) = x(y)
 
 # ╔═╡ b0ea40ff-7933-4936-ae61-7c7a32ad84a4
 _apply(x::Real, _) = x
