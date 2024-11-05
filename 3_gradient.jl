@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.46
+# v0.20.0
 
 using Markdown
 using InteractiveUtils
@@ -26,6 +26,9 @@ md"""
 La dérivée univariée au point $a$ correspond à la pente de la **droite tangente** à la fonction en $a$.
 Pour une fonction bivariée, la dérivée dans une direction $d$ correspond à la pente du **plan tangent** à la fonction en $a$ dans la direction $d$.
 """
+
+# ╔═╡ 8bb1be80-db20-4059-bd6e-64a256796a28
+plotly()
 
 # ╔═╡ b3c01426-9a70-448b-bf3e-901e3100082f
 begin
@@ -247,6 +250,9 @@ end
 # ╔═╡ fd74a3bd-e20c-43dd-badc-b1e861e69660
 tangent_plane((x, y) -> sin(x * π) * exp(-y^2 / 4), x0, x1, y0, y1, cx, cy)
 
+# ╔═╡ e4a1845e-0d27-4f0c-abbb-11960b8a2452
+import PlotlyBase, PlotlyKaleido
+
 # ╔═╡ bf46ec06-54d8-41ba-a6b8-1ae1ac289556
 function tangent_line(f, x0, x1, c; n = 100)
 	x = range(x0, stop = x1, length = n)
@@ -285,7 +291,7 @@ PlutoUI = "~0.7.54"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.11.0"
+julia_version = "1.11.1"
 manifest_format = "2.0"
 project_hash = "3181c8565fc29861835d5e4dd143ac76c3d5700f"
 
@@ -1493,6 +1499,7 @@ version = "1.4.1+1"
 
 # ╔═╡ Cell order:
 # ╟─812d53c7-1384-4c77-9185-cf3d6656b98b
+# ╠═8bb1be80-db20-4059-bd6e-64a256796a28
 # ╠═cdf52f5f-d541-48e7-99ca-b5d0ff2c2d17
 # ╟─b3c01426-9a70-448b-bf3e-901e3100082f
 # ╟─674be307-64c1-4485-ad25-a59ff6840df8
@@ -1516,6 +1523,7 @@ version = "1.4.1+1"
 # ╟─9bb14f1d-b7b5-43c1-a931-c5018f544806
 # ╠═73248509-2b7b-4d79-9bc1-4689d843b73e
 # ╠═d776d4d6-825b-11ef-3d58-85ab2150ff5f
+# ╠═e4a1845e-0d27-4f0c-abbb-11960b8a2452
 # ╠═bf46ec06-54d8-41ba-a6b8-1ae1ac289556
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
