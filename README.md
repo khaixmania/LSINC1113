@@ -8,4 +8,4 @@
 
 Ce repo contient les notebooks Pluto des cours.
 
-[<img src="https://raw.githubusercontent.com/fonsp/Pluto.jl/dd0ead4caa2d29a3a2cfa1196d31e3114782d363/frontend/img/logo_white_contour.svg" height="20"/> notebooks](https://blegat.github.io/LSINC1113/) ← Ce lien donne accès à une version statique des notebooks qui peut être visualisée via votre navigateur sans le besoin d'installer Julia ni Pluto.
+[<img src="https://raw.githubusercontent.com/fonsp/Pluto.jl/dd0ead4caa2d29a3a2cfa1196d31e3114782d363/frontend/img/logo_white_contour.svg" height="16"/> notebooks](https://blegat.github.io/LSINC1113/) ← Ce lien donne accès à une version statique des notebooks qui peut être visualisée via votre navigateur sans le besoin d'installer Julia ni Pluto.
