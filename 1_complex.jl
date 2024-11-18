@@ -1,11 +1,14 @@
 ### A Pluto.jl notebook ###
-# v0.19.46
+# v0.20.0
 
 using Markdown
 using InteractiveUtils
 
 # ╔═╡ e3a7dd72-f106-4865-8b24-d86056782160
 using Polynomials, LinearAlgebra, PlutoUI, Plots
+
+# ╔═╡ 2b7df071-7441-43b9-88f9-6035a32efdef
+include("utils.jl")
 
 # ╔═╡ b8949a96-8d97-4048-8022-ab8fabf326a1
 md"# Thème 1 : à la fréquence de Fourier"
@@ -62,6 +65,17 @@ z & = re^{i\theta} & \bar{z} & = re^{-i\theta}\\
 # ╔═╡ ec9dda1a-58f2-4ff8-a318-4e90779bd01b
 md"**Quiz** : Quel est la valeur ``z\bar{z}`` ? (vous pouvez choisir entre cartésienne ou polaire)"
 
+# ╔═╡ cf365493-4628-428a-9580-dda69cab9684
+qa(
+	html"Réponse",
+	md"""```math
+\begin{aligned}
+    \text{(Cartésienne)} \quad & (a + bi)(a - bi) = a^2 - b^2 i^2 = a^2 + b^2\\
+	\text{(Polaire)} \quad & re^{i\theta}re^{-i\theta} = r^2e^{i(\theta - \theta)} = r^2
+\end{aligned}
+```""",
+)
+
 # ╔═╡ f5bd1e83-166d-46b5-a201-bc9ea0ae6e80
 md"## Le théorème fondamental de l'algèbre"
 
@@ -85,6 +99,20 @@ md"""
 \end{align}
 ```
 """
+
+# ╔═╡ 40de804e-0392-4389-9e75-cfc01681dd73
+qa(
+	html"Preuve",
+	md"""
+```math
+\begin{align}
+  4a^2x^2 + 4abx + 4ac & = 0\\
+  4a^2x^2 + 4abx + b^2 & = b^2 - 4ac\\
+  (2ax + b)^2 & = b^2 - 4ac
+\end{align}
+```
+""",
+)
 
 # ╔═╡ dcda655e-1ccf-49c2-8475-7d54060e5fc9
 md"### Les racines de 1"
@@ -213,6 +241,25 @@ b_0\\b_1\\b_2
 4 inconnues pour seulement 3 équations, comment va-t-on trouver ``b_0, b_1, b_2`` et ``r`` ?
 """
 
+# ╔═╡ 603534bb-74a9-4e24-a1f8-df47726eeebe
+qa(
+	html"Réponse",
+	md"""
+La racine ``r`` est une valeur propre de la matrice
+```math
+\begin{bmatrix}
+	0 & 0 & 6\\
+	1 & 0 & -11\\
+	0 & 1 & 6
+\end{bmatrix}
+```
+et le vecteur ``(b_0, b_1, b_2)`` est le vecteur propre correspondant!
+Comme il y a moins d'équation que d'inconnues, il y a un degré de liberté:
+Le vecteur propre peut être multiplié par n'importe quel constante et c'est toujours une solution.
+On peut utiliser ``b_2 = 1`` pour trouver ``q = (x - 2)(x - 3)``.
+""",
+)
+
 # ╔═╡ 2ad434ca-b6ed-4c9b-822e-1c4cfc98c522
 E = eigen([
 	0 0 6
@@ -237,6 +284,27 @@ p2 * p3
 
 # ╔═╡ 59130f1a-4fcd-4ae1-9ecf-1818dfc07612
 md"## Utilitaires"
+
+# ╔═╡ 524dd09a-cf17-4613-b5a7-c7656669b0e8
+import DocumenterCitations
+
+# ╔═╡ 8cdf951c-9ca5-4397-a75f-5f16aca63b2a
+biblio = load_biblio!()
+
+# ╔═╡ 680e483d-4cf5-41e4-bc3f-eb3b144ac5a0
+cite(args...) = bibcite(biblio, args...)
+
+# ╔═╡ 175e6d18-e522-4a39-8635-59ad558df3b8
+md"""
+* Introduction aux complexes $(cite("adams2018Calculus", "Appendix I"))
+* Introduction aux polynômes $(cite("adams2018Calculus", "P.6"))
+"""
+
+# ╔═╡ 702656ca-629b-4a5f-9283-8368ee6e3bf7
+refs(keys) = bibrefs(biblio, keys)
+
+# ╔═╡ db3299a8-06ff-4b70-94ed-88192743d036
+refs(["adams2018Calculus"])
 
 # ╔═╡ faec94e5-434d-4a57-92f4-14548aadf918
 function draw_angle(r, from, to, label)
@@ -288,91 +356,17 @@ begin
 	draw_complex!(1, -θ, a_pos = :bottom, θ_label = "-\\theta", b_label = "-b")
 end
 
-# ╔═╡ 0f87464a-1a55-4f7c-8a88-bf514f5177a0
-begin
-    struct Join
-		list
-	    Join(a) = new(a)
-	    Join(a, b, args...) = Join(tuple(a, b, args...))
-    end
-	function Base.show(io::IO, mime::MIME"text/html", d::Join)
-		for el in d.list
-			show(io, mime, el)
-		end
-	end
-end
-
-# ╔═╡ d163ec11-3c0a-4cab-8dcf-8d56fda1ce6c
-begin
-	struct HTMLTag
-		tag::String
-		parent
-	end
-	function Base.show(io::IO, mime::MIME"text/html", d::HTMLTag)
-		write(io, "<", d.tag, ">")
-		show(io, mime, d.parent)
-		write(io, "</", d.tag, ">")
-	end
-end
-
-# ╔═╡ 1c961138-47a2-4221-844e-511a6813fbd5
-function qa(question, answer)
-	return HTMLTag("details", Join(HTMLTag("summary", question), answer))
-end
-
-# ╔═╡ cf365493-4628-428a-9580-dda69cab9684
-qa(
-	html"Réponse",
-	md"""```math
-\begin{aligned}
-    \text{(Cartésienne)} \quad & (a + bi)(a - bi) = a^2 - b^2 i^2 = a^2 + b^2\\
-	\text{(Polaire)} \quad & re^{i\theta}re^{-i\theta} = r^2e^{i(\theta - \theta)} = r^2
-\end{aligned}
-```""",
-)
-
-# ╔═╡ 40de804e-0392-4389-9e75-cfc01681dd73
-qa(
-	html"Preuve",
-	md"""
-```math
-\begin{align}
-  4a^2x^2 + 4abx + 4ac & = 0\\
-  4a^2x^2 + 4abx + b^2 & = b^2 - 4ac\\
-  (2ax + b)^2 & = b^2 - 4ac
-\end{align}
-```
-""",
-)
-
-# ╔═╡ 603534bb-74a9-4e24-a1f8-df47726eeebe
-qa(
-	html"Réponse",
-	md"""
-La racine ``r`` est une valeur propre de la matrice
-```math
-\begin{bmatrix}
-	0 & 0 & 6\\
-	1 & 0 & -11\\
-	0 & 1 & 6
-\end{bmatrix}
-```
-et le vecteur ``(b_0, b_1, b_2)`` est le vecteur propre correspondant!
-Comme il y a moins d'équation que d'inconnues, il y a un degré de liberté:
-Le vecteur propre peut être multiplié par n'importe quel constante et c'est toujours une solution.
-On peut utiliser ``b_2 = 1`` pour trouver ``q = (x - 2)(x - 3)``.
-""",
-)
-
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
+DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Polynomials = "f27b6e38-b328-58d1-80ce-0feddd5e7a45"
 
 [compat]
+DocumenterCitations = "~1.3.5"
 Plots = "~1.40.8"
 PlutoUI = "~0.7.59"
 Polynomials = "~4.0.11"
@@ -382,15 +376,25 @@ Polynomials = "~4.0.11"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.11.0"
+julia_version = "1.11.1"
 manifest_format = "2.0"
-project_hash = "129ee28aa4ccf7f77ece315e0a2f6dae167bc694"
+project_hash = "c2c231bc7df08f9ebe667e016a851454a5c33c7e"
+
+[[deps.ANSIColoredPrinters]]
+git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
+uuid = "a4c015fc-c6ff-483c-b24f-f7ea428134e9"
+version = "0.0.1"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
 git-tree-sha1 = "6e1d2a35f2f90a4bc7c2ed98079b2ba09c35b83a"
 uuid = "6e696c72-6542-2067-7265-42206c756150"
 version = "1.3.2"
+
+[[deps.AbstractTrees]]
+git-tree-sha1 = "2d9c9a55f9c93e8887ad391fbae72f8ef55e1177"
+uuid = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
+version = "0.4.5"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -403,6 +407,24 @@ version = "1.11.0"
 [[deps.Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 version = "1.11.0"
+
+[[deps.BibInternal]]
+deps = ["TestItems"]
+git-tree-sha1 = "b3107800faf461eca3281f89f8d768f4b3e99969"
+uuid = "2027ae74-3657-4b95-ae00-e2f7d55c3e64"
+version = "0.3.7"
+
+[[deps.BibParser]]
+deps = ["BibInternal", "DataStructures", "Dates", "JSONSchema", "TestItems", "YAML"]
+git-tree-sha1 = "33478bed83bd124ea8ecd9161b3918fb4c70e529"
+uuid = "13533e5b-e1c2-4e57-8cef-cac5e52f6474"
+version = "0.2.2"
+
+[[deps.Bibliography]]
+deps = ["BibInternal", "BibParser", "DataStructures", "Dates", "FileIO", "YAML"]
+git-tree-sha1 = "520c679daed011ce835d9efa7778863aad6687ed"
+uuid = "f1be7e48-bf82-45af-a471-ae754a193061"
+version = "0.2.20"
 
 [[deps.BitFlags]]
 git-tree-sha1 = "0691e34b3bb8be9307330f88d1a3c3f25466c24d"
@@ -532,6 +554,18 @@ git-tree-sha1 = "2fb1e02f2b635d0845df5d7c167fec4dd739b00d"
 uuid = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 version = "0.9.3"
 
+[[deps.Documenter]]
+deps = ["ANSIColoredPrinters", "AbstractTrees", "Base64", "CodecZlib", "Dates", "DocStringExtensions", "Downloads", "Git", "IOCapture", "InteractiveUtils", "JSON", "LibGit2", "Logging", "Markdown", "MarkdownAST", "Pkg", "PrecompileTools", "REPL", "RegistryInstances", "SHA", "TOML", "Test", "Unicode"]
+git-tree-sha1 = "d0ea2c044963ed6f37703cead7e29f70cba13d7e"
+uuid = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+version = "1.8.0"
+
+[[deps.DocumenterCitations]]
+deps = ["AbstractTrees", "Bibliography", "Dates", "Documenter", "Logging", "Markdown", "MarkdownAST", "OrderedCollections", "Unicode"]
+git-tree-sha1 = "5a72f3f804deb1431cb79f5636163e4fdf8ed8ed"
+uuid = "daee34ce-89f3-4625-b898-19384cb65244"
+version = "1.3.5"
+
 [[deps.Downloads]]
 deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
@@ -566,6 +600,12 @@ deps = ["Artifacts", "Bzip2_jll", "FreeType2_jll", "FriBidi_jll", "JLLWrappers",
 git-tree-sha1 = "466d45dc38e15794ec7d5d63ec03d776a9aff36e"
 uuid = "b22a6f82-2f65-5046-a5b2-351ab43fb4e5"
 version = "4.4.4+1"
+
+[[deps.FileIO]]
+deps = ["Pkg", "Requires", "UUIDs"]
+git-tree-sha1 = "91e0e5c68d02bcdaae76d3c8ceb4361e8f28d2e9"
+uuid = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
+version = "1.16.5"
 
 [[deps.FileWatching]]
 uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
@@ -628,6 +668,18 @@ deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Li
 git-tree-sha1 = "9b02998aba7bf074d14de89f9d37ca24a1a0b046"
 uuid = "78b55507-aeef-58d4-861c-77aaff3498b1"
 version = "0.21.0+0"
+
+[[deps.Git]]
+deps = ["Git_jll"]
+git-tree-sha1 = "04eff47b1354d702c3a85e8ab23d539bb7d5957e"
+uuid = "d7ba0133-e1db-5d97-8f8c-041e4b3a1eb2"
+version = "1.3.1"
+
+[[deps.Git_jll]]
+deps = ["Artifacts", "Expat_jll", "JLLWrappers", "LibCURL_jll", "Libdl", "Libiconv_jll", "OpenSSL_jll", "PCRE2_jll", "Zlib_jll"]
+git-tree-sha1 = "ea372033d09e4552a04fd38361cd019f9003f4f4"
+uuid = "f8c6e375-362e-5223-8a59-34ff63f689eb"
+version = "2.46.2+0"
 
 [[deps.Glib_jll]]
 deps = ["Artifacts", "Gettext_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Libiconv_jll", "Libmount_jll", "PCRE2_jll", "Zlib_jll"]
@@ -704,6 +756,24 @@ git-tree-sha1 = "31e996f0a15c7b280ba9f76636b3ff9e2ae58c9a"
 uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 version = "0.21.4"
 
+[[deps.JSON3]]
+deps = ["Dates", "Mmap", "Parsers", "PrecompileTools", "StructTypes", "UUIDs"]
+git-tree-sha1 = "1d322381ef7b087548321d3f878cb4c9bd8f8f9b"
+uuid = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+version = "1.14.1"
+
+    [deps.JSON3.extensions]
+    JSON3ArrowExt = ["ArrowTypes"]
+
+    [deps.JSON3.weakdeps]
+    ArrowTypes = "31f734f8-188a-4ce0-8406-c8a06bd891cd"
+
+[[deps.JSONSchema]]
+deps = ["Downloads", "JSON", "JSON3", "URIs"]
+git-tree-sha1 = "243f1cdb476835d7c249deb9f29ad6b7827da7d3"
+uuid = "7d188eb4-7ad8-530c-ae41-71a32a6d4692"
+version = "1.4.1"
+
 [[deps.JpegTurbo_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "25ee0be4d43d0269027024d75a24c24d6c6e590c"
@@ -754,6 +824,11 @@ version = "0.16.5"
     DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
     SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
     SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
+
+[[deps.LazilyInitializedFields]]
+git-tree-sha1 = "0f2da712350b020bc3957f269c9caad516383ee0"
+uuid = "0e77f7df-68c5-4e49-93ce-4cd80f5598bf"
+version = "1.3.0"
 
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
@@ -878,6 +953,12 @@ version = "0.5.13"
 deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 version = "1.11.0"
+
+[[deps.MarkdownAST]]
+deps = ["AbstractTrees", "Markdown"]
+git-tree-sha1 = "465a70f0fc7d443a00dcdc3267a497397b8a3899"
+uuid = "d0879d2d-cac2-40c8-9cee-1863dc0c7391"
+version = "0.1.2"
 
 [[deps.MbedTLS]]
 deps = ["Dates", "MbedTLS_jll", "MozillaCACerts_jll", "NetworkOptions", "Random", "Sockets"]
@@ -1119,6 +1200,12 @@ git-tree-sha1 = "45e428421666073eab6f2da5c9d310d99bb12f9b"
 uuid = "189a3867-3050-52da-a836-e630ba90ab69"
 version = "1.2.2"
 
+[[deps.RegistryInstances]]
+deps = ["LazilyInitializedFields", "Pkg", "TOML", "Tar"]
+git-tree-sha1 = "ffd19052caf598b8653b99404058fce14828be51"
+uuid = "2792f1a3-b283-48e8-9a74-f99dce5104f3"
+version = "0.1.0"
+
 [[deps.RelocatableFolders]]
 deps = ["SHA", "Scratch"]
 git-tree-sha1 = "ffdaf70d81cf6ff22c2b6e733c900c3321cab864"
@@ -1204,6 +1291,18 @@ git-tree-sha1 = "5cf7606d6cef84b543b483848d4ae08ad9832b21"
 uuid = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 version = "0.34.3"
 
+[[deps.StringEncodings]]
+deps = ["Libiconv_jll"]
+git-tree-sha1 = "b765e46ba27ecf6b44faf70df40c57aa3a547dcb"
+uuid = "69024149-9ee7-55f6-a4c4-859efe599b68"
+version = "0.3.7"
+
+[[deps.StructTypes]]
+deps = ["Dates", "UUIDs"]
+git-tree-sha1 = "159331b30e94d7b11379037feeb9b690950cace8"
+uuid = "856f2bd8-1eba-4b0a-8007-ebc267875bd4"
+version = "1.11.0"
+
 [[deps.StyledStrings]]
 uuid = "f489334b-da3d-4c2e-b8f0-e476e12c162b"
 version = "1.11.0"
@@ -1233,6 +1332,11 @@ version = "0.1.1"
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 version = "1.11.0"
+
+[[deps.TestItems]]
+git-tree-sha1 = "42fd9023fef18b9b78c8343a4e2f3813ffbcefcb"
+uuid = "1c621080-faea-4a02-84b6-bbd5e436b8fe"
+version = "1.0.0"
 
 [[deps.TranscodingStreams]]
 git-tree-sha1 = "0c45878dcfdcfa8480052b6ab162cdd138781742"
@@ -1469,6 +1573,12 @@ git-tree-sha1 = "e92a1a012a10506618f10b7047e478403a046c77"
 uuid = "c5fb5394-a638-5e4d-96e5-b29de1b5cf10"
 version = "1.5.0+0"
 
+[[deps.YAML]]
+deps = ["Base64", "Dates", "Printf", "StringEncodings"]
+git-tree-sha1 = "dea63ff72079443240fbd013ba006bcbc8a9ac00"
+uuid = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
+version = "0.4.12"
+
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
 uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
@@ -1588,6 +1698,8 @@ version = "1.4.1+1"
 
 # ╔═╡ Cell order:
 # ╟─b8949a96-8d97-4048-8022-ab8fabf326a1
+# ╟─175e6d18-e522-4a39-8635-59ad558df3b8
+# ╟─db3299a8-06ff-4b70-94ed-88192743d036
 # ╟─3b8c660c-f983-4b3f-b94d-9da74954b91d
 # ╟─dfb5823d-19ee-47e3-9a5a-84dcb7b110f0
 # ╟─92bfdadf-7c3d-4b1f-95cc-3a031ce1d7e1
@@ -1638,11 +1750,13 @@ version = "1.4.1+1"
 # ╠═e2349574-7404-4bf3-b7cd-228a75c0e07f
 # ╟─59130f1a-4fcd-4ae1-9ecf-1818dfc07612
 # ╠═e3a7dd72-f106-4865-8b24-d86056782160
+# ╠═524dd09a-cf17-4613-b5a7-c7656669b0e8
+# ╠═2b7df071-7441-43b9-88f9-6035a32efdef
+# ╠═8cdf951c-9ca5-4397-a75f-5f16aca63b2a
+# ╟─680e483d-4cf5-41e4-bc3f-eb3b144ac5a0
+# ╠═702656ca-629b-4a5f-9283-8368ee6e3bf7
 # ╠═faec94e5-434d-4a57-92f4-14548aadf918
 # ╠═4a86cd38-0c56-4fad-850a-d7b76d77eb52
 # ╠═1c9cf4cd-584c-4ed5-87a1-dfc623965f2c
-# ╠═0f87464a-1a55-4f7c-8a88-bf514f5177a0
-# ╠═d163ec11-3c0a-4cab-8dcf-8d56fda1ce6c
-# ╠═1c961138-47a2-4221-844e-511a6813fbd5
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
