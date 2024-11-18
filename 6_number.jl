@@ -44,7 +44,7 @@ frametitle("Théorème de Bézout")
 md"""
 > **Définition** Le *Greatest Common Divisor (GCD)* de deux nombres ``a \in \mathbb{Z}`` et ``b \in \mathbb{Z}``, noté ``\text{gcd}(a, b)`` est le plus grand nombre ``g \in \mathbb{Z}`` qui divise ``a`` (noté ``g \mid a``) et ``b`` (noté ``g \mid b``). C'est à dire qu'il existe ``x \in \mathbb{Z}`` tel que ``a = gx`` et ``y \in \mathbb{Z}`` tel que ``b = gy``. En notation modulaire, ``a \equiv 0 \pmod{g}`` et ``b \equiv 0 \pmod{g}``.
 
-> **Théorème de Bézout** Il existe ``x, y \in \mathbb{Z}`` tels que ``ax + by = c`` si et seulement si ``\text{gcd}(x, y)`` divise ``c``. En notation modulaire ``ax \equiv c \pmod{b}`` et ``by \equiv c \pmod{a}``.
+> **Théorème de Bézout** Il existe ``x, y \in \mathbb{Z}`` tels que ``ax + by = c`` si et seulement si ``\text{gcd}(a, b)`` divise ``c``. En notation modulaire ``ax \equiv c \pmod{b}`` et ``by \equiv c \pmod{a}``.
 """
 
 # ╔═╡ 7bad8c6c-45c7-402f-ad59-6857e9268901
@@ -72,7 +72,7 @@ qa(md"**Observation clé** Que dit le théorème de Bézout par rapport à ``\te
 md"""
 Le nombre ``a`` est **divisible** par ``\text{gcd}(d, r)``.
 Le nombre ``\text{gcd}(d, r)`` divise donc les 3 nombres, ``a``, ``d`` et ``r`` et donc ``\text{gcd}(d, r) = \text{gcd}(a, d, r)``.
-En combinant ça avec l'observation précédente, on a le résultat suivant.``\text{gcd}(a, d) = \text{gcd}(d, r)``.
+En combinant ça avec l'observation précédente, on a ``\text{gcd}(a, d) = \text{gcd}(d, r)``. On peut généraliser cela en le lemme suivant:
 """)
 
 # ╔═╡ d1b260fb-7500-47fb-bb48-21b5857ab55a
@@ -99,10 +99,8 @@ frametitle("Algorithme d'Euclide : implémentation")
 
 # ╔═╡ 97736c6a-3f5d-4978-8dd2-0a11c09ba9f0
 function pgcd(a, b)
-	print("gcd($a, $b) = ")
-    if a < b
-		return pgcd(b, a)
-	elseif b == 0
+	println("gcd($a, $b) = ")
+    if b == 0
 		println(a)
 		return a
 	else
@@ -128,7 +126,7 @@ frametitle("Arithmétique modulaire : somme")
 # ╔═╡ f4f49568-dcf2-4c76-ba66-065d2fda7a4a
 md"""
 ```math
-a \equiv \alpha \pmod{n} \quad b \equiv \beta \pmod{n}
+a \equiv \alpha \pmod{n} \quad \text{et} \quad b \equiv \beta \pmod{n}
 \quad \Rightarrow \quad a + b \equiv \alpha + \beta \pmod{n}
 ```
 """
@@ -153,6 +151,29 @@ n \mid a \quad \text{et} \quad n \mid b \quad \Rightarrow \quad n \mid (ab)
 À ne pas confondre avec
 ```math
 a \mid n \quad \text{et} \quad b \mid n \quad \Rightarrow \quad (ab/\text{gcd}(a,b)) \mid n
+```
+"""
+
+# ╔═╡ c3411941-d77f-46cb-8378-23998a1a4828
+frametitle("Division par 3 et 9")
+
+# ╔═╡ a826d9d1-47db-4645-be6e-3ae0ed8d4e18
+md"""
+Est-ce que 2345 est divisible par 3 ou 9?
+```math
+\begin{align}
+2 \cdot 10^3 + 3 \cdot 10^2 + 4 \cdot 10 + 5 & \equiv \,\, ? \pmod{9}\\
+2 \cdot 1^3 + 3 \cdot 1^2 + 4 \cdot 1 + 5 & \equiv \,\, ? \pmod{9}\\
+2 + 3 + 4 + 5 & \equiv 14 \pmod{9}\\
+\end{align}
+```
+Est-ce que 2345 est divisible par 11?
+```math
+\begin{align}
+2 \cdot (10)^3 + 3 \cdot 10^2 + 4 \cdot 10 + 5 & \equiv \,\, ? \pmod{11}\\
+2 \cdot (-1)^3 + 3 \cdot (-1)^2 + 4 \cdot (-1) + 5 & \equiv \,\, ? \pmod{11}\\
+-2 + 3 - 4 + 5 & \equiv 2 \pmod{11}\\
+\end{align}
 ```
 """
 
@@ -193,11 +214,8 @@ Donc si ``(x, y)`` est solution, ``(x + b, y - a)`` aussi.
 
 # ╔═╡ 3f1af973-a02b-4e06-8e6e-eff414fcaf67
 function pgcdx(a, b)
-    if a < b
-		g, x, y = pgcdx(b, a)
-		return g, y, x
-	elseif b == 0
-		return a, one(a), one(a)
+    if b == 0
+		return a, one(a), zero(a)
 	else
 		q, r = divrem(a, b)
 		g, x, y = pgcdx(b, r)
@@ -1102,6 +1120,8 @@ version = "17.4.0+2"
 # ╠═a1628317-7937-4316-85bf-2da860effce3
 # ╠═5c6c45b4-67e3-4ea8-bc09-0205ab24cbc3
 # ╟─7db2060b-d69e-42e7-ae81-fd37ee793876
+# ╟─c3411941-d77f-46cb-8378-23998a1a4828
+# ╟─a826d9d1-47db-4645-be6e-3ae0ed8d4e18
 # ╟─83852dd5-3546-45af-a845-b01dab0aa2a6
 # ╟─e1aafab7-c4f3-45ac-81ee-7f875ac7c8c6
 # ╟─9752afbb-96e6-4f96-92cb-09654cf46155
