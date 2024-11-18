@@ -15,7 +15,7 @@ macro bind(def, element)
 end
 
 # ╔═╡ 06679a09-47d7-4024-8232-4954c08747a0
-using PlutoUI, Primes
+using PlutoUI, Primes, DataFrames
 
 # ╔═╡ 1b1d5c9b-5fc7-480e-9649-e9c44a49c38d
 include("utils.jl")
@@ -32,7 +32,7 @@ Si tous les mois avaient 30 jours, est-ce qu'il y a des jours de la semaine qui 
 
 Reformulation: pour tout nombre ``0 \le j < 7``, existe-t-il ``x`` et ``y`` tels que ``30x = j + 7y``. Notation modulo : ``30x \equiv j \pmod{7}``.
 
-Si tous les ans avaient 365 jours, est-ce qu'il y a des jours de la semaine qui ne seront jamais le jours de Noël ? Est si tous les ans avaient 366 jours ? Et s'ils avaient 364 jours ?
+Si tous les ans avaient 365 jours, est-ce qu'il y a des jours de la semaine qui ne seront jamais le 25 Décembre ? Est si tous les ans avaient 366 jours ? Et s'ils avaient 364 jours ?
 
 Reformulation: pour tout nombre ``0 \le j < 7``, existe-t-il ``x`` et ``y`` tels que ``365x = j + 7y``. Notation modulo : ``365x \equiv j \pmod{7}``.
 """
@@ -187,6 +187,8 @@ md"""
 ```math
 xb + yr = g \quad \text{et} \quad r = a - qb \quad \Rightarrow \quad (x - yq)b + ya = g
 ```
+Solution *homogène* ``x = b``, ``y = -a`` → ``ba - ab = 0``.
+Donc si ``(x, y)`` est solution, ``(x + b, y - a)`` aussi.
 """
 
 # ╔═╡ 3f1af973-a02b-4e06-8e6e-eff414fcaf67
@@ -215,14 +217,151 @@ md"Pas une solution unique:"
 # ╔═╡ eeaec4f4-71bd-43df-b9c9-a00bc3b1864b
 gcdx(gcd_a, gcd_b)
 
-# ╔═╡ f4895654-d684-42d2-ae4c-de72e6824484
-frametitle("Euler totient function")
+# ╔═╡ 2c34c17e-12de-43ea-870c-818c97647836
+frametitle("Inversion modulaire par Euclide étendu")
 
-# ╔═╡ f855a589-36c2-4b77-9f01-17da963658f4
-mod(2^Primes.totient(11), 11)
+# ╔═╡ ca8905ef-97a3-424c-bb2e-559f7151585b
+md"""
+Ensemble de solutions: ``(x + kb, y - ka)`` pour un ``k \in \mathbb{Z}`` arbitraire.
+Prenons ``k`` tel que ``0 \le x + kb < b`` avec `mod`.
+"""
 
-# ╔═╡ 457a1da2-3f87-43e6-a9cf-8dbfb225c4dc
-frametitle("Fast exponentiation")
+# ╔═╡ 21df1900-3954-4506-b759-aeeee664d1df
+function modinv(a, n)
+	g, x, y = gcdx(a, n)
+	return mod(x, n)
+end
+
+# ╔═╡ 819f15ef-31d0-44b6-837a-e3e67f2667b9
+md"Revenons aux exemples:"
+
+# ╔═╡ 78df9410-5ea4-4d9f-bbe5-862f76a100fc
+md"``30x \equiv j \pmod{7} \quad \Rightarrow \quad x \equiv (30)^{-1} j\pmod{7}``"
+
+# ╔═╡ 93aa2719-f962-497b-9fda-30f54fd848eb
+collect(mod.(modinv(30, 7) .* (0:6), 7))
+
+# ╔═╡ 7da0705e-c925-4f8d-9ca4-8d8a0f859fea
+md"``365x \equiv j \pmod{7} \quad \Rightarrow \quad x \equiv (365)^{-1} j\pmod{7}``"
+
+# ╔═╡ a59a20e2-a7c7-48a9-ad8d-8094e03a749d
+collect(mod.(modinv(365, 7) .* (0:6), 7))
+
+# ╔═╡ e52d25b3-65bf-4617-ae8d-fae0d0c8d041
+md"``366x \equiv j \pmod{7} \quad \Rightarrow \quad x \equiv (366)^{-1} j\pmod{7}``"
+
+# ╔═╡ ed3d6ea6-08c9-45d0-8b77-3389a557bfd1
+collect(mod.(modinv(366, 7) .* (0:6), 7))
+
+# ╔═╡ bbb2793a-faa4-43bd-b2e8-e8d3ac93310f
+md"S'il y avait 364 jours par ans, les fêtes seraient toujours le même jour de la semaine!"
+
+# ╔═╡ f9f03579-5bfc-452d-bff9-9e7adfe095d3
+gcd(364, 7)
+
+# ╔═╡ d8a28762-8aab-49e9-b9ac-38901d34abff
+frametitle("Fast powering")
+
+# ╔═╡ e505716d-af01-455f-a55a-a9c225822ad5
+md"""
+Comment calculer ``a^m`` pour un large ``m`` ?
+"""
+
+# ╔═╡ a7d06375-e4dd-47b1-8aba-11dc4d62954b
+qa(md"Supposons que ``m`` est pair, c'est à dire ``m = 2k``...",
+md"""
+On a ``a^(2k) = (a^k)^2``. Si ``b = a^k``, on calcule le produit ``b \times b``.
+""")
+
+# ╔═╡ 6332b2f2-ed2f-448a-b1df-247b110e335b
+qa(md"Que faire si que ``m`` est impair, c'est à dire ``m = 2k + 1``...",
+md"""
+Si ``b = a^(2k)``, calcule le produit ``b \times a``.
+""")
+
+# ╔═╡ 6107d03d-1e45-4eb9-b8e2-51e4a72485e6
+frametitle("Recursive implementation")
+
+# ╔═╡ 58da5ba4-c858-4684-a9f4-5a39fdc4fb03
+function fast_power(prod_func::Function, a, power)
+	if power == 0
+		return one(a)
+	elseif mod(power, 2) == 1
+		return prod_func(fast_power(prod_func, a, power - 1), a)
+	else
+		b = fast_power(prod_func, a, div(power, 2))
+		return prod_func(b, b)
+	end
+end
+
+# ╔═╡ a4698418-ebf7-4992-a3ba-a15ff282bf87
+qa(md"Quelle est la complexité temporelle ?", md"Si ``n`` est impair, au coup suivant, il est pair donc il n'est impair qu'au pire une fois sur deux. En ``l`` multiplication, on divise ``m`` au moins par ``2^{l/2}`` donc on a une complexité logarithmique ``\Theta(\log(m))``  en supposant que `prod_func` a une complexité ``\Theta(1)``.")
+
+# ╔═╡ 59817f59-429b-4f17-a46a-185571fd1e5a
+frametitle("Fast modular powering")
+
+# ╔═╡ 8670abc2-63e6-496a-b20c-812197acd9ad
+fast_mod_power(a, power, n) = fast_power((a, b) -> mod(a * b, n), a, power)
+
+# ╔═╡ 1b2245f8-2f02-4c4d-b6d2-e65af1f2a21e
+md"Last 3 digit:"
+
+# ╔═╡ 9722971a-16f1-4f28-ba31-c12b673b8a30
+md"Et modulo 999 ?"
+
+# ╔═╡ 6ed7c73d-60da-4908-85cb-958745d81ebc
+md"Par l'algo d'Euclide, ``\text{gcd}(n, n - 1) = 1`` donc ``\text{gcd}(1000, 999) = 1``."
+
+# ╔═╡ 9d4858f8-e63d-46e0-a6cc-992d3cc4a9a4
+qa(md"Comment trouver `mod(2^power, 999000)` en utilisant `pow_1000` et `pow_999` ?", md"
+On peut utiliser une astuce similaire à l'interpolation Lagrangienne.
+On veut trouver ``x`` et ``y`` tels que
+```math
+\texttt{pow\_1000}x + \texttt{pow\_999}y \equiv 2^\texttt{power} \pmod{999000}
+```
+On veut que ``x \equiv 0 \pmod{999}`` et ``x \equiv 1 \pmod{1000}``.
+On utilise donc ``x = 999x'`` avec ``x' \equiv (999)^{-1} \pmod{1000}``.
+")
+
+# ╔═╡ c2fab245-8a98-4b41-ade2-c5b16e9c39f9
+frametitle("Chinese remainder theorem")
+
+# ╔═╡ 821de132-559b-4420-b866-e97134c5bd9a
+function chinese_remainder_theorem(r, n)
+	for i in eachindex(n)
+		for j in eachindex(n)
+			if i != j && gcd(n[i], n[j]) != 1
+				error("`$(n[i])` and `$(n[j])` are not coprime")
+			end
+		end
+	end
+	prod_n = prod(n)
+	return mod(sum(eachindex(n)) do i
+		m = div(prod_n, n[i])
+		return mod(r[i] * mod(m * modinv(m, n[i]), prod_n), prod_n)
+	end, prod_n)
+end
+
+# ╔═╡ 67093a35-8e1b-4cd3-b11b-c7ff601f802e
+md"`primes_upper` = $(@bind primes_upper Slider(50:300, default = 100, show_value = true))"
+
+# ╔═╡ 16b677e4-c467-462a-b770-b7a31160e129
+prime_list = primes(3, primes_upper)
+
+# ╔═╡ 61462af5-69bd-42be-8918-7992c79ee00d
+qa(md"Comment savoir si `prime_list` contient assez de nombres pour avoir la bonne réponse ?", md"On a la bonne réponse modulo `prod(prime_list)` donc si `prod(prime_list) > 2^power`, on a la bonne réponse.")
+
+# ╔═╡ 8f6ba1c4-a971-4dc4-ac5d-2f30790aecde
+frametitle("Fermat’s Little Theorem")
+
+# ╔═╡ 82ba8fe1-435e-422b-abb7-cb50a7a85e1e
+frametitle("Dicrete logarithm")
+
+# ╔═╡ a293bb0e-078d-4335-a446-3096a79c03bc
+frametitle("Diffie-Hellman")
+
+# ╔═╡ 3da58487-192f-458a-9d47-7a4ce98b6da3
+section("Utils")
 
 # ╔═╡ bafc9870-3823-4d1d-b0b7-94c69ee764d5
 import DocumenterCitations
@@ -261,6 +400,45 @@ abn_picker
 # ╔═╡ 4ef2c7e9-fb37-4e38-a252-b9c3f83d2a82
 abn_picker
 
+# ╔═╡ 2381babe-0777-45db-acff-cc647a8a68d3
+power_slider = @bind power Slider(1:10000, default = 256, show_value = true)
+
+# ╔═╡ c8f85081-3659-4796-8550-2e708b09c8d7
+md"`power` = $power_slider"
+
+# ╔═╡ 7881bb75-3ef9-496e-860b-03ced6b593c5
+@time big(2)^power
+
+# ╔═╡ 087cbe82-b42a-4f80-a1af-97f3aa93aeeb
+md"`power` = $power_slider"
+
+# ╔═╡ 9e8a61d9-a700-4851-b1cd-49ce042c3530
+@time big(2)^power
+
+# ╔═╡ 3c198d79-c46a-4781-8bd1-b6b68f06c31f
+@time fast_power(*, big(2), power)
+
+# ╔═╡ 77093b36-c232-4477-be49-845f1a631829
+@time pow_1000 = fast_mod_power(2, power, 1000)
+
+# ╔═╡ 65f4990f-1952-4682-8fa8-9e3dd4bf1ebf
+@time pow_999 = fast_mod_power(2, power, 999)
+
+# ╔═╡ 6f10de7b-ce05-4f82-82e7-4110be44e8cc
+mod(pow_1000 * 999 * modinv(999, 1000) + pow_999 * 1000 * modinv(1000, 999), 999000)
+
+# ╔═╡ ec25ce2a-de8a-4b69-a3f3-b47cd58ec986
+chinese_remainder_theorem([pow_1000, pow_999], [1000, 999])
+
+# ╔═╡ 9cef898e-192c-418a-bec6-511f8b6da179
+fast_mod_power(2, power, 999000)
+
+# ╔═╡ 191f8429-cbbb-44aa-8beb-271a94293e4b
+chinese_remainder_theorem(big.(fast_mod_power.(2, power, prime_list)), big.(prime_list))
+
+# ╔═╡ e9633e3f-376d-413d-bc19-d015f6ce76e5
+big(2)^power
+
 # ╔═╡ ba16d83d-21a5-4f0c-807b-674a167da4dc
 biblio = load_biblio!()
 
@@ -273,6 +451,9 @@ md"""
 * Diffie-Hellman: $(cite("hoffstein2014Introduction", "2.2, 2.3"))
 """
 
+# ╔═╡ ed023033-1044-4d48-aab1-39e9300043f7
+cite("hoffstein2014Introduction", "Theorem 1.24")
+
 # ╔═╡ 8a5a251f-5373-445a-97b1-4d652c6b7ba8
 refs(keys) = bibrefs(biblio, keys)
 
@@ -282,11 +463,13 @@ refs(["hoffstein2014Introduction"])
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Primes = "27ebfcd6-29c5-5fa9-bf4b-fb8fc14df3ae"
 
 [compat]
+DataFrames = "~1.7.0"
 DocumenterCitations = "~1.3.5"
 PlutoUI = "~0.7.60"
 Primes = "~0.5.6"
@@ -298,7 +481,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.1"
 manifest_format = "2.0"
-project_hash = "64644b8e91149faeb3d708bbf16fbd456efb4a5e"
+project_hash = "39cd322a83db7ad72fd4bf305476ad8bef3b75b5"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -373,11 +556,32 @@ deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 version = "1.1.1+0"
 
+[[deps.Crayons]]
+git-tree-sha1 = "249fe38abf76d48563e2f4556bebd215aa317e15"
+uuid = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
+version = "4.1.1"
+
+[[deps.DataAPI]]
+git-tree-sha1 = "abe83f3a2f1b857aac70ef8b269080af17764bbe"
+uuid = "9a962f9c-6df0-11e9-0e5d-c546b8b5ee8a"
+version = "1.16.0"
+
+[[deps.DataFrames]]
+deps = ["Compat", "DataAPI", "DataStructures", "Future", "InlineStrings", "InvertedIndices", "IteratorInterfaceExtensions", "LinearAlgebra", "Markdown", "Missings", "PooledArrays", "PrecompileTools", "PrettyTables", "Printf", "Random", "Reexport", "SentinelArrays", "SortingAlgorithms", "Statistics", "TableTraits", "Tables", "Unicode"]
+git-tree-sha1 = "fb61b4812c49343d7ef0b533ba982c46021938a6"
+uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+version = "1.7.0"
+
 [[deps.DataStructures]]
 deps = ["Compat", "InteractiveUtils", "OrderedCollections"]
 git-tree-sha1 = "1d0a14036acb104d9e89698bd408f63ab58cdc82"
 uuid = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 version = "0.18.20"
+
+[[deps.DataValueInterfaces]]
+git-tree-sha1 = "bfc1187b79289637fa0ef6d4436ebdfe6905cbd6"
+uuid = "e2d170a0-9d28-54be-80f0-106bbe20a464"
+version = "1.0.0"
 
 [[deps.Dates]]
 deps = ["Printf"]
@@ -429,6 +633,11 @@ git-tree-sha1 = "05882d6995ae5c12bb5f36dd2ed3f61c98cbb172"
 uuid = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
 version = "0.8.5"
 
+[[deps.Future]]
+deps = ["Random"]
+uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
+version = "1.11.0"
+
 [[deps.Git]]
 deps = ["Git_jll"]
 git-tree-sha1 = "04eff47b1354d702c3a85e8ab23d539bb7d5957e"
@@ -459,6 +668,19 @@ git-tree-sha1 = "b6d6bfdd7ce25b0f9b2f6b3dd56b2673a66c8770"
 uuid = "b5f81e59-6552-4d32-b1f0-c071b021bf89"
 version = "0.2.5"
 
+[[deps.InlineStrings]]
+git-tree-sha1 = "45521d31238e87ee9f9732561bfee12d4eebd52d"
+uuid = "842dd82b-1e85-43dc-bf29-5d0ee9dffc48"
+version = "1.4.2"
+
+    [deps.InlineStrings.extensions]
+    ArrowTypesExt = "ArrowTypes"
+    ParsersExt = "Parsers"
+
+    [deps.InlineStrings.weakdeps]
+    ArrowTypes = "31f734f8-188a-4ce0-8406-c8a06bd891cd"
+    Parsers = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
+
 [[deps.IntegerMathUtils]]
 git-tree-sha1 = "b8ffb903da9f7b8cf695a8bead8e01814aa24b30"
 uuid = "18e54dd8-cb9d-406c-a71d-865a43cbb235"
@@ -468,6 +690,16 @@ version = "0.1.2"
 deps = ["Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 version = "1.11.0"
+
+[[deps.InvertedIndices]]
+git-tree-sha1 = "0dc7b50b8d436461be01300fd8cd45aa0274b038"
+uuid = "41ab1584-1d38-5bbf-9106-f11c6c58b48f"
+version = "1.3.0"
+
+[[deps.IteratorInterfaceExtensions]]
+git-tree-sha1 = "a3f24677c21f5bbe9d2a714f95dcd58337fb2856"
+uuid = "82899510-4779-5014-852e-03e436cf321d"
+version = "1.0.0"
 
 [[deps.JLLWrappers]]
 deps = ["Artifacts", "Preferences"]
@@ -498,6 +730,11 @@ deps = ["Downloads", "JSON", "JSON3", "URIs"]
 git-tree-sha1 = "243f1cdb476835d7c249deb9f29ad6b7827da7d3"
 uuid = "7d188eb4-7ad8-530c-ae41-71a32a6d4692"
 version = "1.4.1"
+
+[[deps.LaTeXStrings]]
+git-tree-sha1 = "dda21b8cbd6a6c40d9d02a73230f9d70fed6918c"
+uuid = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+version = "1.4.0"
 
 [[deps.LazilyInitializedFields]]
 git-tree-sha1 = "0f2da712350b020bc3957f269c9caad516383ee0"
@@ -569,6 +806,12 @@ deps = ["Artifacts", "Libdl"]
 uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
 version = "2.28.6+0"
 
+[[deps.Missings]]
+deps = ["DataAPI"]
+git-tree-sha1 = "ec4f7fbeab05d7747bdf98eb74d130a2a2ed298d"
+uuid = "e1d29d7a-bbdc-5cf2-9ac0-f12de2c33e28"
+version = "1.2.0"
+
 [[deps.Mmap]]
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 version = "1.11.0"
@@ -623,6 +866,12 @@ git-tree-sha1 = "eba4810d5e6a01f612b948c9fa94f905b49087b0"
 uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 version = "0.7.60"
 
+[[deps.PooledArrays]]
+deps = ["DataAPI", "Future"]
+git-tree-sha1 = "36d8b4b899628fb92c2749eb488d884a926614d3"
+uuid = "2dfb63ee-cc39-5dd5-95bd-886bf059d720"
+version = "1.4.3"
+
 [[deps.PrecompileTools]]
 deps = ["Preferences"]
 git-tree-sha1 = "5aa36f7049a63a1528fe8f7c3f2113413ffd4e1f"
@@ -634,6 +883,12 @@ deps = ["TOML"]
 git-tree-sha1 = "9306f6085165d270f7e3db02af26a400d580f5c6"
 uuid = "21216c6a-2e73-6563-6e65-726566657250"
 version = "1.4.3"
+
+[[deps.PrettyTables]]
+deps = ["Crayons", "LaTeXStrings", "Markdown", "PrecompileTools", "Printf", "Reexport", "StringManipulation", "Tables"]
+git-tree-sha1 = "1101cd475833706e4d0e7b122218257178f48f34"
+uuid = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
+version = "2.4.0"
 
 [[deps.Primes]]
 deps = ["IntegerMathUtils"]
@@ -677,6 +932,12 @@ version = "1.3.0"
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 version = "0.7.0"
 
+[[deps.SentinelArrays]]
+deps = ["Dates", "Random"]
+git-tree-sha1 = "d0553ce4031a081cc42387a9b9c8441b7d99f32d"
+uuid = "91c51154-3ec4-41a3-a24f-3f23e20d615c"
+version = "1.4.7"
+
 [[deps.Serialization]]
 uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 version = "1.11.0"
@@ -684,6 +945,12 @@ version = "1.11.0"
 [[deps.Sockets]]
 uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
 version = "1.11.0"
+
+[[deps.SortingAlgorithms]]
+deps = ["DataStructures"]
+git-tree-sha1 = "66e0a8e672a0bdfca2c3f5937efb8538b9ddc085"
+uuid = "a2af1166-a08f-5f64-846c-94a0d3cef48c"
+version = "1.2.1"
 
 [[deps.Statistics]]
 deps = ["LinearAlgebra"]
@@ -703,6 +970,12 @@ git-tree-sha1 = "b765e46ba27ecf6b44faf70df40c57aa3a547dcb"
 uuid = "69024149-9ee7-55f6-a4c4-859efe599b68"
 version = "0.3.7"
 
+[[deps.StringManipulation]]
+deps = ["PrecompileTools"]
+git-tree-sha1 = "a6b1675a536c5ad1a60e5a5153e1fee12eb146e3"
+uuid = "892a3eda-7b42-436c-8928-eab12a02cf0e"
+version = "0.4.0"
+
 [[deps.StructTypes]]
 deps = ["Dates", "UUIDs"]
 git-tree-sha1 = "159331b30e94d7b11379037feeb9b690950cace8"
@@ -717,6 +990,18 @@ version = "1.11.0"
 deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 version = "1.0.3"
+
+[[deps.TableTraits]]
+deps = ["IteratorInterfaceExtensions"]
+git-tree-sha1 = "c06b2f539df1c6efa794486abfb6ed2022561a39"
+uuid = "3783bdb8-4a98-5b6b-af9a-565f29a5fe9c"
+version = "1.0.1"
+
+[[deps.Tables]]
+deps = ["DataAPI", "DataValueInterfaces", "IteratorInterfaceExtensions", "OrderedCollections", "TableTraits"]
+git-tree-sha1 = "598cd7c1f68d1e205689b1c2fe65a9f85846f297"
+uuid = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
+version = "1.12.0"
 
 [[deps.Tar]]
 deps = ["ArgTools", "SHA"]
@@ -828,15 +1113,60 @@ version = "17.4.0+2"
 # ╠═40b8e474-16e0-4a61-bb28-11d90beefeea
 # ╟─a41722b8-8c21-4d3c-a38b-4d248a79e80a
 # ╠═eeaec4f4-71bd-43df-b9c9-a00bc3b1864b
-# ╟─f4895654-d684-42d2-ae4c-de72e6824484
-# ╠═f855a589-36c2-4b77-9f01-17da963658f4
-# ╟─457a1da2-3f87-43e6-a9cf-8dbfb225c4dc
+# ╟─2c34c17e-12de-43ea-870c-818c97647836
+# ╟─ca8905ef-97a3-424c-bb2e-559f7151585b
+# ╠═21df1900-3954-4506-b759-aeeee664d1df
+# ╟─819f15ef-31d0-44b6-837a-e3e67f2667b9
+# ╟─78df9410-5ea4-4d9f-bbe5-862f76a100fc
+# ╠═93aa2719-f962-497b-9fda-30f54fd848eb
+# ╟─7da0705e-c925-4f8d-9ca4-8d8a0f859fea
+# ╠═a59a20e2-a7c7-48a9-ad8d-8094e03a749d
+# ╟─e52d25b3-65bf-4617-ae8d-fae0d0c8d041
+# ╠═ed3d6ea6-08c9-45d0-8b77-3389a557bfd1
+# ╟─bbb2793a-faa4-43bd-b2e8-e8d3ac93310f
+# ╠═f9f03579-5bfc-452d-bff9-9e7adfe095d3
+# ╟─d8a28762-8aab-49e9-b9ac-38901d34abff
+# ╟─e505716d-af01-455f-a55a-a9c225822ad5
+# ╟─c8f85081-3659-4796-8550-2e708b09c8d7
+# ╠═7881bb75-3ef9-496e-860b-03ced6b593c5
+# ╟─a7d06375-e4dd-47b1-8aba-11dc4d62954b
+# ╟─6332b2f2-ed2f-448a-b1df-247b110e335b
+# ╟─6107d03d-1e45-4eb9-b8e2-51e4a72485e6
+# ╠═58da5ba4-c858-4684-a9f4-5a39fdc4fb03
+# ╟─087cbe82-b42a-4f80-a1af-97f3aa93aeeb
+# ╠═9e8a61d9-a700-4851-b1cd-49ce042c3530
+# ╠═3c198d79-c46a-4781-8bd1-b6b68f06c31f
+# ╟─a4698418-ebf7-4992-a3ba-a15ff282bf87
+# ╟─59817f59-429b-4f17-a46a-185571fd1e5a
+# ╠═8670abc2-63e6-496a-b20c-812197acd9ad
+# ╟─1b2245f8-2f02-4c4d-b6d2-e65af1f2a21e
+# ╠═77093b36-c232-4477-be49-845f1a631829
+# ╟─9722971a-16f1-4f28-ba31-c12b673b8a30
+# ╠═65f4990f-1952-4682-8fa8-9e3dd4bf1ebf
+# ╟─6ed7c73d-60da-4908-85cb-958745d81ebc
+# ╟─9d4858f8-e63d-46e0-a6cc-992d3cc4a9a4
+# ╠═9cef898e-192c-418a-bec6-511f8b6da179
+# ╠═6f10de7b-ce05-4f82-82e7-4110be44e8cc
+# ╟─c2fab245-8a98-4b41-ade2-c5b16e9c39f9
+# ╠═821de132-559b-4420-b866-e97134c5bd9a
+# ╠═ec25ce2a-de8a-4b69-a3f3-b47cd58ec986
+# ╟─67093a35-8e1b-4cd3-b11b-c7ff601f802e
+# ╠═16b677e4-c467-462a-b770-b7a31160e129
+# ╠═191f8429-cbbb-44aa-8beb-271a94293e4b
+# ╠═e9633e3f-376d-413d-bc19-d015f6ce76e5
+# ╟─61462af5-69bd-42be-8918-7992c79ee00d
+# ╟─8f6ba1c4-a971-4dc4-ac5d-2f30790aecde
+# ╟─ed023033-1044-4d48-aab1-39e9300043f7
+# ╟─82ba8fe1-435e-422b-abb7-cb50a7a85e1e
+# ╟─a293bb0e-078d-4335-a446-3096a79c03bc
+# ╟─3da58487-192f-458a-9d47-7a4ce98b6da3
 # ╠═06679a09-47d7-4024-8232-4954c08747a0
 # ╠═bafc9870-3823-4d1d-b0b7-94c69ee764d5
 # ╠═b57adc77-3783-4958-91a0-e90782338755
 # ╠═18031ccb-657f-409a-9080-9a0ada3ae8b5
 # ╠═256c8009-4d2b-42f8-adaa-6f238ef22c6d
 # ╟─4e35d650-b9a6-4668-90f0-f27a50af29ad
+# ╠═2381babe-0777-45db-acff-cc647a8a68d3
 # ╠═1b1d5c9b-5fc7-480e-9649-e9c44a49c38d
 # ╠═ba16d83d-21a5-4f0c-807b-674a167da4dc
 # ╠═6c3595d2-4f68-44da-90e7-dc9c68479bcf
