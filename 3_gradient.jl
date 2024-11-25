@@ -78,7 +78,7 @@ $$\nabla f = (\partial f/\partial x, \partial f/\partial y)$$
 md"""
 ## Calculer le gradient à la main
 
-Comment calculer les valeurs de $\partial f/\partial x$ et $\partial f/\partial x$ ?
+Comment calculer les valeurs de $\partial f/\partial x$ et $\partial f/\partial y$ ?
 Commençant par voir comment faire ça à la main. Nous verrons au cours suivant comment le calculer algorithmiquement.
 L'astuce: pour calculer $\frac{\partial}{\partial x}f(x, y)$, il faut voir $y$ comme constant et donc voir $f$ comme fonction de $x$ uniquement. Par exemple:
 
