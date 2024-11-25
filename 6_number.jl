@@ -379,7 +379,7 @@ frametitle("Fast powering for matrices")
 fib_rec(n) = (n == 0 ? 0 : (n == 1 ? 1 : fib_rec(n - 1) + fib_rec(n - 2)))
 
 # ╔═╡ 027fe67c-d2f0-49f6-b894-959795551d27
-@time fib_rec(32)
+@time fib_rec(42)
 
 # ╔═╡ 462fa407-d973-4e9e-8512-b7cd3bb98b7b
 function fib_seq(n)
@@ -505,6 +505,59 @@ function discrete_log(a, g, p)
 	end
 end
 
+# ╔═╡ 64eb4b52-4946-467c-867a-a6fc437b15f6
+frametitle("Meet in the middle approach")
+
+# ╔═╡ a7d9703a-5121-4b43-8cd4-2acf9a0d91ef
+md"""
+La méthode *meet in the middle* est une méthode générique permettant de passer d'une complexité de ``\mathcal{O}(N)`` à ``\mathcal{O}(\sqrt{N})``.
+"""
+
+# ╔═╡ 15367f3b-c7e4-4004-a018-5422a7f22024
+md"On peut mettre le vecteur de taille ``n^2`` sous forme de matrice de taille ``n \times n``"
+
+# ╔═╡ e1b5733f-a7a8-458f-a345-b358b9a03fcf
+md"""
+On remarque que la matrice est de rang 1. Elle vaut
+```math
+\begin{bmatrix}
+1 & g^n & \cdots & g^{n^2-n}\\
+g & g^{n+1} & \ddots & g^{n^2-n+1}\\
+\vdots & \ddots & \ddots & \vdots\\
+g^{n-1} & g^{2n-1} & \cdots & g^{n^2 - 1}
+\end{bmatrix}
+\equiv
+\begin{bmatrix}
+  1\\
+  g\\
+  g^2\\
+  \vdots\\
+  g^{n-1}
+\end{bmatrix}
+\begin{bmatrix}
+  1 &
+  g^{n} &
+  g^{2n} &
+  \cdots &
+  g^{n^2-n}
+\end{bmatrix}
+\pmod{p}
+```
+"""
+
+# ╔═╡ f86a5efc-d31e-4e88-b81f-ebdbbeba11ec
+md"""
+On doit donc trouver la ligne ``i`` et la ligne et ``j`` tels que
+```math
+\begin{align}
+g^{i-1}g^{(j-1)n} & \equiv a & \pmod{p}\\
+g^{i-1} & \equiv a(g^{-n})^{j-1} & \pmod{p}
+\end{align}
+```
+Ils ne reste plus qu'à chercher une collision entre les listes de restes modulo ``p`` pour ``g^{i-1}`` et ``a(g^{-n})^{j-1}``.
+L'identification des collision peut se faire en ``\mathcal{O}(\sqrt{n}\log(n))`` avec une recherche dichotomique our en ``\mathcal{O}(\sqrt{n})`` amorti avec un dictionaire.
+"""
+
 # ╔═╡ ee43c389-55f4-4cf9-a8db-ce37d1b89db4
 frametitle("Shanks's Babystep–Giantstep Algorithm")
 
@@ -541,10 +594,38 @@ function shanks_discrete_log(a, g, p)
 end
 
 # ╔═╡ 1e27eedc-5308-4608-863f-fb81d60acdf0
-qa(md"Quelle est la complexité?", md"???")
+qa(md"Quelle est la complexité?", md"``\mathcal{O}(\sqrt{p}\log(p))``")
 
 # ╔═╡ a293bb0e-078d-4335-a446-3096a79c03bc
 frametitle("Diffie-Hellman")
+
+# ╔═╡ c5e906c8-0f73-4955-baa7-337195329e04
+md"""
+Étant donné un nombre premier ``p`` et une racine primitive ``g`` modulo ``p``, Alice (resp. Bob) génère un nombre secret ``a`` (resp. ``b``). Ils communique ensuite publiquement ``A`` et ``B``.
+"""
+
+# ╔═╡ c376513c-6553-4cd6-8384-ae6ff9d472d7
+md"""
+```math
+A \equiv g^a \pmod{p} \qquad B \equiv g^b \pmod{p}
+```
+"""
+
+# ╔═╡ eb311761-ace2-4632-9ebf-9c7c166659f7
+md"""
+```math
+A' \equiv B^a \pmod{p} \qquad B' \equiv A^b \pmod{p}
+```
+"""
+
+# ╔═╡ 227e415e-ab17-4f3a-b695-9573c9ee2b57
+qa(md"What is the relation between ``A'`` and ``B'`` ?",
+md"""
+```math
+A' \equiv (g^b)^a \equiv g^{ab} \equiv (g^{a})^b \equiv B' \pmod{p}
+```
+Alice et Bob ont donc maintenant la même clef! Il est cependant difficile de trouver ``A'`` depuis ``A`` et ``B`` sans connaitre les secrets ``a`` ou ``b`` si le Discrete Logarithm Problem est difficile.
+""")
 
 # ╔═╡ 3da58487-192f-458a-9d47-7a4ce98b6da3
 section("Utils")
@@ -621,6 +702,9 @@ chinese_remainder_theorem([pow_1000, pow_999], [1000, 999])
 
 # ╔═╡ 9cef898e-192c-418a-bec6-511f8b6da179
 fast_mod_power(2, power, 999000)
+
+# ╔═╡ 4c2d45e3-56a2-467f-b87f-7b98cb873a05
+fast_mod_power.(2, power, prime_list)
 
 # ╔═╡ 191f8429-cbbb-44aa-8beb-271a94293e4b
 chinese_remainder_theorem(big.(fast_mod_power.(2, power, prime_list)), big.(prime_list))
@@ -782,6 +866,15 @@ x = discrete_log(3, g, p)
 
 # ╔═╡ 9bdb30ba-48a7-4e1b-96c2-ea0e059d5253
 fast_mod_power(g, x, p)
+
+# ╔═╡ ce07d5c5-90a3-4c12-bada-30e4da1b99fd
+fast_mod_power.(g, 0:15, 17)
+
+# ╔═╡ ae89661a-2c0f-4752-adc2-023f09dc0e9f
+reshape(fast_mod_power.(g, 0:15, 17), 4, 4)
+
+# ╔═╡ 4a98507b-653e-4354-a825-7605f8fcb31b
+mod.(fast_mod_power.(g, 0:3, 17) * fast_mod_power.(g^4, 0:3, 17)', 17)
 
 # ╔═╡ 59254bfd-48f2-4585-9ba5-e4c809421072
 shanks_x = shanks_discrete_log(3, g, p)
@@ -1874,6 +1967,7 @@ version = "3.5.0+0"
 # ╠═ec25ce2a-de8a-4b69-a3f3-b47cd58ec986
 # ╟─67093a35-8e1b-4cd3-b11b-c7ff601f802e
 # ╠═16b677e4-c467-462a-b770-b7a31160e129
+# ╠═4c2d45e3-56a2-467f-b87f-7b98cb873a05
 # ╠═191f8429-cbbb-44aa-8beb-271a94293e4b
 # ╠═e9633e3f-376d-413d-bc19-d015f6ce76e5
 # ╟─61462af5-69bd-42be-8918-7992c79ee00d
@@ -1917,6 +2011,14 @@ version = "3.5.0+0"
 # ╠═9bdb30ba-48a7-4e1b-96c2-ea0e059d5253
 # ╟─bcf73ad7-a08b-4cbb-bcd2-d0abc002e7e2
 # ╟─bc9a718f-4b97-4e15-acf8-d180abc5b6d5
+# ╟─64eb4b52-4946-467c-867a-a6fc437b15f6
+# ╟─a7d9703a-5121-4b43-8cd4-2acf9a0d91ef
+# ╠═ce07d5c5-90a3-4c12-bada-30e4da1b99fd
+# ╟─15367f3b-c7e4-4004-a018-5422a7f22024
+# ╠═ae89661a-2c0f-4752-adc2-023f09dc0e9f
+# ╟─e1b5733f-a7a8-458f-a345-b358b9a03fcf
+# ╠═4a98507b-653e-4354-a825-7605f8fcb31b
+# ╟─f86a5efc-d31e-4e88-b81f-ebdbbeba11ec
 # ╟─ee43c389-55f4-4cf9-a8db-ce37d1b89db4
 # ╟─1072a756-5026-4de9-93a8-f942d54c474a
 # ╠═3026f9c5-81d3-443a-940a-f22fef9754af
@@ -1927,6 +2029,10 @@ version = "3.5.0+0"
 # ╠═ab467d70-ceb1-40e5-b8fe-82e2f1bd95fd
 # ╟─1e27eedc-5308-4608-863f-fb81d60acdf0
 # ╟─a293bb0e-078d-4335-a446-3096a79c03bc
+# ╟─c5e906c8-0f73-4955-baa7-337195329e04
+# ╟─c376513c-6553-4cd6-8384-ae6ff9d472d7
+# ╟─eb311761-ace2-4632-9ebf-9c7c166659f7
+# ╟─227e415e-ab17-4f3a-b695-9573c9ee2b57
 # ╟─35b7b8b7-bff6-4f64-91b9-b65035162365
 # ╟─3da58487-192f-458a-9d47-7a4ce98b6da3
 # ╠═7f9bd301-355b-43f5-b168-22fac9e52511
