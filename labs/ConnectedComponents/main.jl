@@ -20,4 +20,10 @@ myplot(graph, connected_components(graph))
 
 function my_connected_component(graph)
     # TODO
+    # Vous pouvez commencer par utiliser https://juliacollections.github.io/DataStructures.jl/stable/disjoint_sets/
+    # pour vous aider
+    # Ensuite, essayez d'implémenter DisjointSet vous-même !
+    for edge in edges
+        # Arête liant les noeuds `edge.src` et `edge.dst`
+    end
 end
