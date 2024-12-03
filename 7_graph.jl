@@ -63,7 +63,7 @@ On associe un sommet du graphe à chaque sommet du polyhèdre et une arêtes à 
 
 # ╔═╡ 73642ba1-918f-450c-a555-7bcd393ec54e
 md"""
-Relation d'Euler: le nombre de faces est égal à
+**Relation d'Euler**: le nombre de faces est égal à
 ``
 2 - |V| + |E|
 ``.
@@ -126,8 +126,51 @@ let
 	gplot(g)
 end
 
+# ╔═╡ cbc8da76-9adf-4670-b07c-0f5366b55547
+frametitle("Calcul de composantes connexes")
+
+# ╔═╡ 338527b3-ec32-4794-8b92-63cce6ce4285
+md"""
+On démarre en assignant une composant connexe différente pour chaque noeud.
+Pour chaque arête, on fusionne les composantes connexes des deux noeuds liés par l'arête. Comment calculer cette fusion efficacement ?
+
+Supposons qu'on ait 4 noeuds. On démarre avec le tableau ``(1, 2, 3, 4)`` signifiant que chaque noeud est dans une composante connexe différente.
+
+* En commençant avec l'arête ``(1, 2)``, on fusionne et on arrive au tableau ``(1, 1, 3, 4)``.
+* Si on voit ensuite l'arête ``(3, 4)``, on arrive alors au tableau ``(1, 1, 3, 3)``.
+* Si on voit ensuite l'arête ``(1, 3)``, on update le tableau à ``(1, 1, 1, 1)``.
+"""
+
+# ╔═╡ 269320fe-a575-4fe4-86b6-67b0dd4484a5
+qa(md"Quelle est la complexité de cet algorithm ?", md"""
+À la 3ième étape, on doit mettre à jours deux éléments du tableau. Dans le pire cas, si on doit fusionner deux composante connexes dont la taille est ``O(|V|)``, la complexité d'une fusion peut être ``O(|V|)``.
+Comme on a ``|E|`` fusion, la complexité de l'algorithm est ``O(|V|\cdot |E|)``.
+""")
+
+# ╔═╡ b184882e-f2ed-4e9c-b763-0173711d6fac
+frametitle("Disjoint-Set datastructure")
+
+# ╔═╡ caa3a9dd-e7d6-493b-9586-8d08d9c8b9e5
+md"""
+Pour améliorer l'algorithme, pour la fusion de l'algorithm ``(1, 3)``, on peut updater le tableau à ``(1, 1, 1, 3)``.
+Pour le noeud 4, on encode donc qu'il est dans la même connected component que le noeud 3 qui qui est dans la même connected component que le noeud 1. Le noeud 4 est donc lié indirectement au noeud 1 qui est appelé sa racine.
+"""
+
+# ╔═╡ fb0dc703-d81e-40e3-9cee-59744a2359c1
+qa(md"Quelle est complexité après cette amélioration ?", md"""
+Pour fusionner, il ne faut qu'updater une seule entrée du tableau, la racine d'un des deux noeuds de l'arête. Seulement, il pourrait faloir ``O(|V|)`` étapes pour trouver la racine. On a donc toujours ``O(|V|\cdot|E|)``.
+""")
+
+# ╔═╡ 9cd44e27-1c13-4831-a17b-bff99514194e
+md"""
+De façon surprenante, si on met à jour le valeur dans le tableau pour mettre directement le root après l'avoir calculé, la complexité passe à ``O(|V| \alpha(|V|))`` où ``\alpha`` est la réciproque de la [fonction d'Ackermann](https://fr.wikipedia.org/wiki/Fonction_d%27Ackermann), une fonction qui augmente extrèmement lentement donc en pratique, c'est presque ``O(|V|)``.
+"""
+
 # ╔═╡ 8e7b6a51-1f8e-43d7-846b-a9e7596052b9
 frametitle("Piste Eulérienne")
+
+# ╔═╡ 0d914458-7ab1-4d0e-afc6-1bd0db52076a
+qa(md"Proof", md"Pour chaque noeud de degré pair, quand on arrive à ce noeud, on saura le quitter par une arête non-utilisé. Son degré d'arête non-utilisé va être diminué par deux et donc rester pair. On va alors s'arêter sur le noeud de départ si tous les degrés sont pairs. Si 2 degrés sont impairs, on doit partir d'un noeud à degré impair et on arrivera à l'autre noeud à degré impair. Ceci construit un circuit ou piste et laisse le graphe avec un degré pair d'arêtes non-utilisées à chaque noeud. On peut alors trouver un autre circuit avec la même approche et continuer à construire de nouveaux circuit jusqu'à ce que tous les degrés soient zero. Si le graphe a une seule composante connecté, on sait ensuite fusionner tous ces circuits en un seul circuit.")
 
 # ╔═╡ 75bb5e30-76b8-486b-b3fa-9979aaf830a5
 section("Utils")
@@ -154,9 +197,6 @@ mesh = Polyhedra.Mesh(projected)
 
 # ╔═╡ 064d8f08-13b3-43f4-8492-6b9b4c7297d4
 Makie.mesh(mesh)
-
-# ╔═╡ 10b756d1-ca75-4417-842a-c11270e6a29f
-Makie.wireframe(mesh)
 
 # ╔═╡ 2d0c6a4f-f55d-41d2-89cf-501a97bcd89d
 cite(args...) = bibcite(biblio, args...)
@@ -208,7 +248,7 @@ WGLMakie = "~0.10.13"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.11.1"
+julia_version = "1.11.2"
 manifest_format = "2.0"
 project_hash = "feb7b6e362fe5c6656a7e942f7aba17db4834b37"
 
@@ -1989,7 +2029,6 @@ version = "3.6.0+0"
 # ╟─c87e1a66-62e6-41aa-bcc0-fb1704d7e259
 # ╟─064d8f08-13b3-43f4-8492-6b9b4c7297d4
 # ╟─55283461-b2e6-4e81-884f-48ef81e605d4
-# ╟─10b756d1-ca75-4417-842a-c11270e6a29f
 # ╟─73642ba1-918f-450c-a555-7bcd393ec54e
 # ╟─e41498fa-8fed-4354-bb3b-a2fc8afeacd9
 # ╟─27ee39a0-0eb2-42dc-bf90-eb2fa0d7497e
@@ -1999,8 +2038,16 @@ version = "3.6.0+0"
 # ╟─043ff87b-41e4-49c2-aaee-bee39f088b58
 # ╟─2ebc96d9-e526-408a-a264-a87771b96258
 # ╟─9e065cf0-7483-4ec2-809c-cdd7d22a5564
+# ╟─cbc8da76-9adf-4670-b07c-0f5366b55547
+# ╟─338527b3-ec32-4794-8b92-63cce6ce4285
+# ╟─269320fe-a575-4fe4-86b6-67b0dd4484a5
+# ╟─b184882e-f2ed-4e9c-b763-0173711d6fac
+# ╟─caa3a9dd-e7d6-493b-9586-8d08d9c8b9e5
+# ╟─fb0dc703-d81e-40e3-9cee-59744a2359c1
+# ╟─9cd44e27-1c13-4831-a17b-bff99514194e
 # ╟─8e7b6a51-1f8e-43d7-846b-a9e7596052b9
 # ╟─84926c9f-5ed7-4720-8153-01700575d3c5
+# ╟─0d914458-7ab1-4d0e-afc6-1bd0db52076a
 # ╠═75bb5e30-76b8-486b-b3fa-9979aaf830a5
 # ╠═f83fdf0a-a2f5-4d72-9297-a409cf4e2bbb
 # ╠═accdf77c-fc4b-4777-bebf-9d69ebb36526
