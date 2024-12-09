@@ -98,19 +98,19 @@ frametitle("Spanning tree")
 # ╔═╡ 944b6ad9-731b-4479-94bd-e61876987917
 function spanning_forest(g, edges_it = edges(g))
 	component = IntDisjointSets(nv(g))
-	function create_loop!(g, edge)
+	function create_loop!(edge)
 		loop = in_same_set(component, src(edge), dst(edge))
 		union!(component, src(edge), dst(edge))
 		return loop
 	end
-	return [edge for edge in edges_it if !create_loop!(g, edge)]
+	return [edge for edge in edges_it if !create_loop!(edge)]
 end
 
 # ╔═╡ 3c09769f-13b2-4713-8d2e-06abd7735c33
 frametitle("Minimum spanning tree")
 
 # ╔═╡ 3eb8d016-d1a1-4e4f-a307-e2c439c502e4
-kruskal(g) = spanning_forest(g, sort(edges(g), by = weight))
+kruskal(g) = spanning_forest(g, sort(collect(edges(g)), by = weight))
 
 # ╔═╡ 8c384e86-18d4-419b-977b-c5d5bfd1318f
 frametitle("Graphes dirigés")
@@ -120,15 +120,6 @@ gplot(random_regular_digraph(16, 2))
 
 # ╔═╡ 264eb1b6-0e3f-4d67-b8b0-5f0831d18b95
 frametitle("Strongly connected components")
-
-# ╔═╡ 730e5e09-e818-49c5-8fa1-495b39b4267e
-let
-	g = random_regular_digraph(64, 1)
-	c = Set.(strongly_connected_components(g))
-	cols = distinguishable_colors(length(c))
-	tree = Set(spanning_forest(g))
-	gplot(g, nodefillc = [cols[findfirst(comp -> v in comp, c)] for v in vertices(g)])
-end
 
 # ╔═╡ 66c7051b-c377-4376-a472-b2bd5c788267
 frametitle("Directed Acyclic Graph (DAG)")
@@ -266,16 +257,27 @@ let
 	gplot(g, edgestrokec = [cols[(edge in tree) + 1] for edge in edges(g)], nodefillc = colors.blue)
 end
 
+# ╔═╡ accdf77c-fc4b-4777-bebf-9d69ebb36526
+import DocumenterCitations, Polyhedra, Makie, WGLMakie, StaticArrays, Bonito, Luxor, Formatting, Random
+
 # ╔═╡ ecf6a7d0-3279-4bff-b0f4-73327f60b702
 let
+	Random.seed!(0)
 	g = random_weighted(10, 3, 1:9)
 	cols = [colors.red, colors.green]
-	tree = Set(spanning_forest(g))
+	tree = Set(kruskal(g))
 	gplot(g, edgelabel=string.(Int.(weight.(edges(g)))), edgestrokec = [cols[(edge in tree) + 1] for edge in edges(g)], nodefillc = colors.blue)
 end
 
-# ╔═╡ accdf77c-fc4b-4777-bebf-9d69ebb36526
-import DocumenterCitations, Polyhedra, Makie, WGLMakie, StaticArrays, Bonito, Luxor, Formatting
+# ╔═╡ 730e5e09-e818-49c5-8fa1-495b39b4267e
+let
+	Random.seed!(32)
+	g = random_regular_digraph(32, 2)
+	c = Set.(strongly_connected_components(g))
+	cols = distinguishable_colors(length(c))
+	tree = Set(spanning_forest(g))
+	gplot(g, nodefillc = [cols[findfirst(comp -> v in comp, c)] for v in vertices(g)])
+end
 
 # ╔═╡ 46977b09-a43a-427c-8974-a1fd5f2d7da2
 Makie.barplot(1:n, called)
@@ -587,6 +589,9 @@ Par abus de language, on parle souvent d'arbre sans se soucier de si le graphe e
 md"""
 Étant donné un graphe ``G(V, E)``, sa *forêt sous-tendante* (spanning forest) est une forêt ``G'(V, E')`` où ``E' \subseteq E``. Comment la trouver ?
 """
+
+# ╔═╡ b5088341-c171-45bc-ab93-c49059da6c6a
+qa(md"Quelle est la complexité de Kruskal ?", md"??")
 
 # ╔═╡ dc4766e9-e4a7-4b8b-a6db-360df927cc5d
 md"""
@@ -979,6 +984,7 @@ Luxor = "ae8d54c2-7ccd-5906-9d76-62fc9837b5bc"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Polyhedra = "67491407-f73d-577b-9b50-8179a7c68029"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SimpleWeightedGraphs = "47aef6b3-ad0c-573a-a1e2-d07658019622"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
@@ -1006,7 +1012,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "685229cf90765f828bbd159dc4f81259876b937a"
+project_hash = "5bf96e00a2e13ab0a5de00e8daf8c8bd9034ba1f"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -2938,6 +2944,7 @@ version = "3.5.0+0"
 # ╟─3c09769f-13b2-4713-8d2e-06abd7735c33
 # ╠═3eb8d016-d1a1-4e4f-a307-e2c439c502e4
 # ╟─ecf6a7d0-3279-4bff-b0f4-73327f60b702
+# ╟─b5088341-c171-45bc-ab93-c49059da6c6a
 # ╟─8c384e86-18d4-419b-977b-c5d5bfd1318f
 # ╟─dc4766e9-e4a7-4b8b-a6db-360df927cc5d
 # ╠═49092fe9-7c24-4564-9d2a-aa313d54ed8a
@@ -2950,7 +2957,7 @@ version = "3.5.0+0"
 # ╠═2f905018-1d7b-43dc-b576-e4080dc946ee
 # ╟─8eca3dcf-e69f-40b6-b1cd-65785af1d2c4
 # ╠═b53e5719-cc0e-4169-9c8d-3eb5a50570b0
-# ╠═0a2f66ad-bff3-42e5-9f91-2f8c46ab41a7
+# ╟─0a2f66ad-bff3-42e5-9f91-2f8c46ab41a7
 # ╟─a95116d6-614a-4a8a-b3a6-5a96e9b3c439
 # ╠═d35df21e-2dd5-478f-b0c1-17cbd96a9cc6
 # ╟─3c82aba6-0539-4578-ad04-648eb3bcf400
