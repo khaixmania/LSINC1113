@@ -142,8 +142,21 @@ frametitle("Visualisation des appels récursifs")
 # ╔═╡ 3c82aba6-0539-4578-ad04-648eb3bcf400
 frametitle("Nombre d'appels")
 
+# ╔═╡ 30861bc6-4af9-43dc-a1f5-fed9bb157564
+frametitle("Bottom-Up / Dynamic Programming")
+
+# ╔═╡ 9b024507-48e2-4247-aa4e-ed0958af7b2d
+function fib_bottom_up(n)
+	fib = zeros(Int, n)
+	fib[1] = fib[2] = 1
+	for k in 3:n
+		fib[k] = fib[k - 1] + fib[k - 2]
+	end
+	return fib[n]
+end
+
 # ╔═╡ a9379cc3-6ca8-4aed-81f7-992f3664ceb3
-frametitle("Mémoïzation")
+frametitle("Top-Down / Mémoïzation")
 
 # ╔═╡ c395343c-3f7c-4dfe-bc0f-8950afc115bf
 function fib!(cache, n)
@@ -179,7 +192,7 @@ begin
 end
 
 # ╔═╡ 1308d56a-f91a-4fe2-8f5d-7d7a15b8f040
-frametitle("Puissance $longueur")
+frametitle("Puissance $longueur : sans mémoïzation")
 
 # ╔═╡ a7530e0a-a3b5-46c8-9666-fb0219d7ba04
 frametitle("Mémoïsation pour Puissance 4")
@@ -202,6 +215,9 @@ end
 
 # ╔═╡ 3f813480-726b-42e0-a648-e3ad76abcf9d
 frametitle("Mémoïsation pour Puissance $mem_longueur")
+
+# ╔═╡ a436f564-8418-477c-9b0d-9d791c893bb1
+frametitle("Pièces de monnaie")
 
 # ╔═╡ 75bb5e30-76b8-486b-b3fa-9979aaf830a5
 section("Utils")
@@ -232,6 +248,9 @@ called = let
 	fib(n)
 	called
 end;
+
+# ╔═╡ 4c76167b-a8ac-436f-87a8-d493d489e61f
+@time fib_bottom_up(n)
 
 # ╔═╡ 9eeaca05-9e6e-4881-85aa-d81ad5460e8c
 @time cached_fib(n)
@@ -352,12 +371,6 @@ struct Config{N}
 	player::StaticArrays.SVector{N,UInt8}
 	max::UInt8
 end
-
-# ╔═╡ 6c3b02ad-5048-427f-8433-f030c96d0036
-function _init(nrows, ncols)
-	z = StaticArrays.SVector{ncols}(ntuple(_ -> zero(UInt8), Val(ncols)))
-	Config(z, z, (0b1 << nrows))
-end;
 
 # ╔═╡ b107f529-f47f-4252-b06a-6e53302be860
 begin
@@ -624,6 +637,14 @@ md"n = $slider_n"
 # ╔═╡ cf1fd0a7-0512-4b0f-800a-912be0c6138a
 md"Nombre d'appels de `fib(k)` venant de `fib(n)`"
 
+# ╔═╡ 76ca63ec-10cb-485c-a0f4-fc4209201032
+md"""
+Ordre topologique: Ordre des noeuds dans lequel chaque noeud ``u`` apparait après tous les noeuds ``v`` tels qu'il y a un chemin de ``u`` vers ``v``.
+"""
+
+# ╔═╡ f9e49361-cdbc-4b77-baf6-1cdb8ed93bce
+md"n = $slider_n"
+
 # ╔═╡ 09192bc0-ac3e-47fe-8307-67f9c66d4f8e
 md"n = $slider_n"
 
@@ -633,12 +654,6 @@ md"""
 * Utilisation de l'algorithme **minimax** vu au cours S4...
 * ...mais avec l'aide de la programmation dynamique!
 """
-
-# ╔═╡ beb44e5f-2677-448e-8a23-6611ad0dd65d
-function minimax(nrows::Integer, ncols, longueur; vert = -200, w = 1200, h = 600, dy = 140, damping = 0.9, Δy = 55, scaling)
-	config = _init(nrows, ncols)
-	Luxor.@draw minimax(config, _first_player(config), longueur, 1; dy, damping, vert, Δy, scaling) w h
-end;
 
 # ╔═╡ 877e5e67-b8a2-4d42-8043-47057a6df1ad
 HAlign(md"Colonnes = $slider_ncols", md"Hauteur = $slider_nrows")
@@ -657,6 +672,58 @@ HAlign(md"Colonnes = $slider_mem_ncols", md"Hauteur = $slider_mem_nrows")
 
 # ╔═╡ ff30250c-8844-45c5-b5fb-2f09bf05ac4e
 md"Longueur = $slider_mem_longueur" # Cols(md"Longueur = $slider_mem_longueur", md"Gagnant patient ? $checkbox_mem_patient")
+
+# ╔═╡ dc54e4b3-2cc6-4528-9490-6638a566a529
+md"""
+Comme on a vu avec Fibonacci et le puissance 4, beaucoup de problème de calcul peuvent se représenter par un graphe où le but est de calculer la valeur d'un noeud du graphe et chaque arête ``(u, v)`` signifie que pour calculer la valeur du noeud ``u``, il faut d'abord calculer la valeur du noeud ``v``.
+
+Considérons le problème de calculer de combien de manières différentes ``x_n``, on sait faire une certaine somme avec des pièces de monnaie.
+Par exemple, pour faire 3 € avec les pièces de 1 € et 2 €, on peut soit utiliser 3 pièces de 1 € ou 1 pièce de 2 € et une pièce de 1 € donc il y a 2 possibilitées.
+
+Quel graphe peut-on utiliser pour modéliser ce problème ? On peut utiliser un noeud par somme en €, représentant la solution du problème pour cette somme là. Si on ne travaille pas avec les cents, et que avec les billets jusque 10 €, on a
+```math
+x_n = x_{n - 10} + x_{n - 5} + x_{n - 2} + x_{n - 1}
+```
+On a donc les arêtes ``(n, n - 10)``, ``(n, n - 5)``, ``(n, n - 5)`` et ``(n, n - 1)``.
+"""
+
+# ╔═╡ 1e6c4a4a-6c76-4f55-ac9d-bc93ccedc190
+qa(md"Est-ce que cette formule donne le bon résultat ?",
+md"""
+Non. Ça considère plusieurs fois la même combinaison. Par exemple, ``x_3`` serait calculé comme ``x_2 + x_1 = 2 + 1 = 3`` alors que ``x_3 = 2``. Le problème c'est que ça considère que prendre une pièce de 2 € puis une pièce de 1 € est différent d'une pièce de 1 € puis une pièce de 2 €.
+
+Il y a une symmétrie dans le problème due au fait qu'on ne se souce pas de l'ordre des pièces et on aimerait casser cette symmétrie.
+Pour cela, on empêche de considérer les solutions où une pièce/billet arrive après une de moins grande valeur. Donc on ne peut pas prendre une pièce de 1 € puis une de 2 €.
+
+Au noeud 2, on ne peut que prendre l'arête correspondant à la pièce de 2 € si on n'a pas encore pris de pièce de 1 € avant.
+Seulement, la possibilité de prendre une arête ne dépend que du noeud, pas du passé des arêtes déjà prises.
+On a donc besoin de considérer un graphe différent.
+""")
+
+# ╔═╡ f4562517-53ec-429c-a398-3f146a82df22
+md"""
+Considérons la valeur ``y_{n,k}`` qui correspond à la façon de faire la somme ``n`` avec des billets/pièces de valeur max ``k``.
+"""
+
+# ╔═╡ 174b7c95-a9f7-4cfd-a679-8000a26b39c9
+qa(md"Quelle est la formule pour ``y_{n,10}`` ? Quel est le graphe ? Est-ce que la bonne valeur est calculée ?",
+md"""
+```math
+y_{n, 10} = y_{n - 10, 10} + y_{n - 5, 5} + y_{n - 2, 2} + y_{n - 1, 1}.
+```
+Le graphe a donc les arêtes ``((n, 10), (n - 10, 10))``, ... La bonne valeur est maintenant calculée, on a bien ``y_{3, 2} = y_{1, 2} + y_{2, 1} = 1 + 1 = 2``.
+""")
+
+# ╔═╡ 783532d8-910e-434d-bf59-0c8dc75cfef3
+md"""
+**Exercice**: Implémenter le calcul avec l'approche top-down et bottom-up. Laquelle est la plus rapide ? Pourquoi ?
+
+**Supplémentaire**: On peut aussi utiliser la formule
+```math
+y_{n, 10} = y_{n - 10, 5} + y_{n - 20, 5} + ... + y_{n - 5, 2} + y_{n - 10, 2} + ...
+```
+Modifier l'implémentation pour utiliser cette formule. Est-ce plus rapide ? Pourquoi ?
+"""
 
 # ╔═╡ f0ba7d64-a360-450b-a9bb-ee6d5751e9ec
 function winner(config, longueur)
@@ -851,12 +918,6 @@ function minimax(config, player, longueur, depth; dy, damping, vert, Δy, scalin
 	return w
 end;
 
-# ╔═╡ 005b2830-0510-4ef2-bb06-5a63ea5c372d
-minimax(2, 2, 2, scaling = 1.7)
-
-# ╔═╡ 9e9f07dd-edcb-471c-9fb4-613553e10353
-minimax(3, 2, 2; vert = -350, w = 1400, h = 900, dy = 170, Δy = 70, scaling = 0.8, damping = 1)
-
 # ╔═╡ 2429f085-20f2-4941-820e-c49499331874
 function game!(config, cols, longueur, memoization; patient, maxturn)
 	if memoization
@@ -881,21 +942,6 @@ function game!(config, cols, longueur, memoization; patient, maxturn)
 	return cols
 end
 
-# ╔═╡ fa7956f3-822a-4d34-bb64-f94104b3d03e
-game(nrows, ncols, longueur; memoization = false, patient = true) = game!(_init(nrows, ncols), Int[], longueur, memoization; patient, maxturn = nrows * ncols)
-
-# ╔═╡ 17dc0577-35dd-4580-b2d1-958f2d3336e5
-cols = @time game(nrows, ncols, longueur)
-
-# ╔═╡ 797a4c59-6978-482e-b085-9924ea5f63bc
-slider_tour = @bind tour Slider(1:length(cols), default = length(cols), show_value = true);
-
-# ╔═╡ a2596069-63c1-4950-b9be-bf10a402b5bb
-mem_cols = @time game(mem_nrows, mem_ncols, mem_longueur, memoization = true)
-
-# ╔═╡ f0f1539a-0a11-4c81-95d8-b6375fbc9160
-slider_mem_tour = @bind mem_tour Slider(1:length(mem_cols), default = length(mem_cols), show_value = true);
-
 # ╔═╡ 2766c3d6-6a48-4b30-bf4e-56ac9a341145
 function draw(config, longueur, δ = 50)
 	sz = (length(_columns(config)), _num_rows(config))
@@ -917,6 +963,27 @@ Observations clés:
 * ``3^{\text{colonnes} \times \text{hauteur}} = `` $(replace(Formatting.format(3^(wooclap_nrows * wooclap_ncols), commas=true), "," => " ")) grilles différentes...
 * ... mais beaucoup de ces grilles sont invalides ou **pas explorées**
 """
+
+# ╔═╡ 8729cfca-e8f2-4eb8-adaf-301dc0d9f061
+function _init(nrows, ncols)
+	z = StaticArrays.SVector{ncols}(ntuple(_ -> zero(UInt8), Val(ncols)))
+	Config(z, z, (0b1 << nrows))
+end
+
+# ╔═╡ fa7956f3-822a-4d34-bb64-f94104b3d03e
+game(nrows, ncols, longueur; memoization = false, patient = true) = game!(_init(nrows, ncols), Int[], longueur, memoization; patient, maxturn = nrows * ncols)
+
+# ╔═╡ 17dc0577-35dd-4580-b2d1-958f2d3336e5
+cols = @time game(nrows, ncols, longueur)
+
+# ╔═╡ 797a4c59-6978-482e-b085-9924ea5f63bc
+slider_tour = @bind tour Slider(1:length(cols), default = length(cols), show_value = true);
+
+# ╔═╡ a2596069-63c1-4950-b9be-bf10a402b5bb
+mem_cols = @time game(mem_nrows, mem_ncols, mem_longueur, memoization = true)
+
+# ╔═╡ f0f1539a-0a11-4c81-95d8-b6375fbc9160
+slider_mem_tour = @bind mem_tour Slider(1:length(mem_cols), default = length(mem_cols), show_value = true);
 
 # ╔═╡ 5b9132b5-6638-413f-83f3-2bf1f2f9e3e6
 function play(nrows, ncols, cols)
@@ -940,6 +1007,18 @@ HAlign(
 	md"tour = $slider_mem_tour",
 	HTML(html(draw(play(mem_nrows, mem_ncols, mem_cols[1:mem_tour]), mem_longueur)))
 )
+
+# ╔═╡ 1f057543-d832-42e3-9d5d-32ba4c825e63
+function minimax(nrows::Integer, ncols, longueur; vert = -200, w = 1200, h = 600, dy = 140, damping = 0.9, Δy = 55, scaling)
+	config = _init(nrows, ncols)
+	Luxor.@draw minimax(config, _first_player(config), longueur, 1; dy, damping, vert, Δy, scaling) w h
+end
+
+# ╔═╡ 005b2830-0510-4ef2-bb06-5a63ea5c372d
+minimax(2, 2, 2, scaling = 1.7)
+
+# ╔═╡ 9e9f07dd-edcb-471c-9fb4-613553e10353
+minimax(3, 2, 2; vert = -350, w = 1400, h = 900, dy = 170, Δy = 70, scaling = 0.8, damping = 1)
 
 # ╔═╡ f1af8644-4daf-464f-aba1-b306541508bc
 mesh = Polyhedra.Mesh(projected)
@@ -2965,6 +3044,11 @@ version = "3.5.0+0"
 # ╟─cf1fd0a7-0512-4b0f-800a-912be0c6138a
 # ╠═46977b09-a43a-427c-8974-a1fd5f2d7da2
 # ╟─6183e415-898a-4d1f-a5db-9c09503affff
+# ╟─30861bc6-4af9-43dc-a1f5-fed9bb157564
+# ╟─76ca63ec-10cb-485c-a0f4-fc4209201032
+# ╟─f9e49361-cdbc-4b77-baf6-1cdb8ed93bce
+# ╠═9b024507-48e2-4247-aa4e-ed0958af7b2d
+# ╠═4c76167b-a8ac-436f-87a8-d493d489e61f
 # ╟─a9379cc3-6ca8-4aed-81f7-992f3664ceb3
 # ╟─09192bc0-ac3e-47fe-8307-67f9c66d4f8e
 # ╠═c395343c-3f7c-4dfe-bc0f-8950afc115bf
@@ -2974,10 +3058,8 @@ version = "3.5.0+0"
 # ╟─28cfa917-cf00-4790-b71d-e629a18e4e10
 # ╟─54d0cbaf-4bf7-4508-b706-b5042dda1644
 # ╠═005b2830-0510-4ef2-bb06-5a63ea5c372d
-# ╟─6c3b02ad-5048-427f-8433-f030c96d0036
-# ╟─beb44e5f-2677-448e-8a23-6611ad0dd65d
-# ╟─3f48d345-1535-4568-becd-d8d79b3fa95c
-# ╟─df7c6179-7541-4b38-8317-1aeccbd04868
+# ╠═3f48d345-1535-4568-becd-d8d79b3fa95c
+# ╠═df7c6179-7541-4b38-8317-1aeccbd04868
 # ╟─73d104ac-7aff-46cc-95b5-a67b6811f64d
 # ╟─9e9f07dd-edcb-471c-9fb4-613553e10353
 # ╟─1308d56a-f91a-4fe2-8f5d-7d7a15b8f040
@@ -2999,6 +3081,12 @@ version = "3.5.0+0"
 # ╟─35cffe19-61e3-4eb1-9ec1-aeb36f91c93b
 # ╟─3b82fa0a-65b1-46dd-b81a-d1fa117893d5
 # ╟─f0f1539a-0a11-4c81-95d8-b6375fbc9160
+# ╟─a436f564-8418-477c-9b0d-9d791c893bb1
+# ╟─dc54e4b3-2cc6-4528-9490-6638a566a529
+# ╟─1e6c4a4a-6c76-4f55-ac9d-bc93ccedc190
+# ╟─f4562517-53ec-429c-a398-3f146a82df22
+# ╟─174b7c95-a9f7-4cfd-a679-8000a26b39c9
+# ╟─783532d8-910e-434d-bf59-0c8dc75cfef3
 # ╟─75bb5e30-76b8-486b-b3fa-9979aaf830a5
 # ╠═b01e3f5a-ad9f-4557-ba62-30e9c57b8532
 # ╠═fdd9318e-ee09-4eab-9322-ad97b03da002
@@ -3028,6 +3116,8 @@ version = "3.5.0+0"
 # ╠═2429f085-20f2-4941-820e-c49499331874
 # ╠═2766c3d6-6a48-4b30-bf4e-56ac9a341145
 # ╠═5b9132b5-6638-413f-83f3-2bf1f2f9e3e6
+# ╠═8729cfca-e8f2-4eb8-adaf-301dc0d9f061
+# ╠═1f057543-d832-42e3-9d5d-32ba4c825e63
 # ╠═f1af8644-4daf-464f-aba1-b306541508bc
 # ╠═2d0c6a4f-f55d-41d2-89cf-501a97bcd89d
 # ╠═37b6ef7f-2b07-4189-a3fe-ae3ab1661eb9
