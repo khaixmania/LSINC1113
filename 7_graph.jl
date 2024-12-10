@@ -618,6 +618,15 @@ md"""
 **Définition** Une **composante fortement connexe** d'un graphe dirigé ``G(V, E)`` est un ensemble ``V' \subseteq V`` tel qu'il existe un chemin de ``u`` vers ``v`` pour tous ``u, v \in V'``.
 """
 
+# ╔═╡ d819bd0c-966d-46b4-88fc-8246989b070e
+md"""
+Si un graph contient un cycle, tous les noeuds de ce cycle sont contenus dans la même composante fortement connexe.
+Si chaque composante fortement connexe est fusionnée en un noeud, il ne reste plus de cycle.
+Le graphe résultat n'a donc plus de cycle, il est dit *acyclique* (DAG).
+
+On va voir que beaucoup de problème peuvent se voir comme un problème de calcul de chaque noeud d'un graphe où les arêtes représentent les dépendences de calcul.
+"""
+
 # ╔═╡ d4cb08b6-7829-45fe-ab61-b45b39b6c3ec
 md"""
 ```math
@@ -639,7 +648,7 @@ md"Nombre d'appels de `fib(k)` venant de `fib(n)`"
 
 # ╔═╡ 76ca63ec-10cb-485c-a0f4-fc4209201032
 md"""
-Ordre topologique: Ordre des noeuds dans lequel chaque noeud ``u`` apparait après tous les noeuds ``v`` tels qu'il y a un chemin de ``u`` vers ``v``.
+**Définition** *Ordre topologique*: Ordre des noeuds dans lequel chaque noeud ``u`` apparait après tous les noeuds ``v`` tels qu'il y a un chemin de ``u`` vers ``v``.
 """
 
 # ╔═╡ f9e49361-cdbc-4b77-baf6-1cdb8ed93bce
@@ -775,21 +784,6 @@ function play!(config, col::Int, player)
 	return row, config
 end
 
-# ╔═╡ 3f48d345-1535-4568-becd-d8d79b3fa95c
-function width(config, player, longueur, damping, depth)
-	if _has_winner(winner(config, longueur)[1])
-		return damping^depth
-	end
-	w = 0
-	for col in _columns(config)
-		row, new_config = play!(config, col, player)
-		if !iszero(row)
-			w += width(new_config, _next_player(player), longueur, damping, depth + 1)
-		end
-	end
-	return max(w, 1)
-end;
-
 # ╔═╡ 2ef98325-0497-4a76-b2b4-161e663575c4
 function _draw(config, longueur, δ = 50)
 	colors = Dict(
@@ -872,51 +866,6 @@ function best_move_rec(config, player, longueur, depth, cache; patient, maxturn)
 	end
 	return best, best_col
 end
-
-# ╔═╡ df7c6179-7541-4b38-8317-1aeccbd04868
-function minimax(config, player, longueur, depth; dy, damping, vert, Δy, scaling)
-	δ = round(Int, dy * damping^depth) * scaling
-	w = width(config, player, longueur, damping, depth)
-	if all(iszero(config.libre))
-		Luxor.translate(0, vert)
-	else
-		Luxor.translate(δ * w/2, 0)
-	end
-	_draw(config, longueur)
-	Luxor.translate(-δ * w/2, 0)
-	if _has_winner(winner(config, longueur)[1])
-		return w
-	end
-	cur = 0
-	for col in _columns(config)
-		row, new_config = play!(config, col, player)
-		if !iszero(row)
-			dx = cur * δ
-			Luxor.translate(dx, dy)
-			win, _, _ = winner(new_config, longueur)
-			score, _ = best_move_rec(new_config, _next_player(player), longueur, depth + 1, nothing, patient = true, maxturn = 30)
-			dw = minimax(new_config, _next_player(player), longueur, depth + 1; dy, damping, vert, Δy, scaling)
-			if _has_winner(win)
-				if player
-					Luxor.sethue("red")
-				else
-					Luxor.sethue("palegreen")
-				end
-			elseif score == 0
-				Luxor.sethue("black")
-			elseif score > 0
-				Luxor.sethue("palegreen")
-			else
-				Luxor.sethue("red")
-			end
-			Luxor.setline(δ/20)
-			Luxor.line(Luxor.Point(-dx+δ * w/2, -dy+Δy), Luxor.Point(δ*dw/2, -Δy), :stroke)
-			Luxor.translate(-dx, -dy)
-			cur += dw
-		end
-	end
-	return w
-end;
 
 # ╔═╡ 2429f085-20f2-4941-820e-c49499331874
 function game!(config, cols, longueur, memoization; patient, maxturn)
@@ -1013,6 +962,66 @@ function minimax(nrows::Integer, ncols, longueur; vert = -200, w = 1200, h = 600
 	config = _init(nrows, ncols)
 	Luxor.@draw minimax(config, _first_player(config), longueur, 1; dy, damping, vert, Δy, scaling) w h
 end
+
+# ╔═╡ b97cff7f-26c4-4343-986c-193b5980e1c6
+function width(config, player, longueur, damping, depth)
+	if _has_winner(winner(config, longueur)[1])
+		return damping^depth
+	end
+	w = 0
+	for col in _columns(config)
+		row, new_config = play!(config, col, player)
+		if !iszero(row)
+			w += width(new_config, _next_player(player), longueur, damping, depth + 1)
+		end
+	end
+	return max(w, 1)
+end;
+
+# ╔═╡ 3098f82f-cd44-4fd8-92ae-6ee4550846fb
+function minimax(config, player, longueur, depth; dy, damping, vert, Δy, scaling)
+	δ = round(Int, dy * damping^depth) * scaling
+	w = width(config, player, longueur, damping, depth)
+	if all(iszero(config.libre))
+		Luxor.translate(0, vert)
+	else
+		Luxor.translate(δ * w/2, 0)
+	end
+	_draw(config, longueur)
+	Luxor.translate(-δ * w/2, 0)
+	if _has_winner(winner(config, longueur)[1])
+		return w
+	end
+	cur = 0
+	for col in _columns(config)
+		row, new_config = play!(config, col, player)
+		if !iszero(row)
+			dx = cur * δ
+			Luxor.translate(dx, dy)
+			win, _, _ = winner(new_config, longueur)
+			score, _ = best_move_rec(new_config, _next_player(player), longueur, depth + 1, nothing, patient = true, maxturn = 30)
+			dw = minimax(new_config, _next_player(player), longueur, depth + 1; dy, damping, vert, Δy, scaling)
+			if _has_winner(win)
+				if player
+					Luxor.sethue("red")
+				else
+					Luxor.sethue("palegreen")
+				end
+			elseif score == 0
+				Luxor.sethue("black")
+			elseif score > 0
+				Luxor.sethue("palegreen")
+			else
+				Luxor.sethue("red")
+			end
+			Luxor.setline(δ/20)
+			Luxor.line(Luxor.Point(-dx+δ * w/2, -dy+Δy), Luxor.Point(δ*dw/2, -Δy), :stroke)
+			Luxor.translate(-dx, -dy)
+			cur += dw
+		end
+	end
+	return w
+end;
 
 # ╔═╡ 005b2830-0510-4ef2-bb06-5a63ea5c372d
 minimax(2, 2, 2, scaling = 1.7)
@@ -3031,6 +3040,7 @@ version = "3.5.0+0"
 # ╟─ea6fabad-d23a-46b7-ba8c-e4822216cd4e
 # ╠═730e5e09-e818-49c5-8fa1-495b39b4267e
 # ╟─66c7051b-c377-4376-a472-b2bd5c788267
+# ╟─d819bd0c-966d-46b4-88fc-8246989b070e
 # ╟─71566570-7d26-4fba-8f9a-8726fb97f2d8
 # ╟─d4cb08b6-7829-45fe-ab61-b45b39b6c3ec
 # ╠═2f905018-1d7b-43dc-b576-e4080dc946ee
@@ -3058,8 +3068,6 @@ version = "3.5.0+0"
 # ╟─28cfa917-cf00-4790-b71d-e629a18e4e10
 # ╟─54d0cbaf-4bf7-4508-b706-b5042dda1644
 # ╠═005b2830-0510-4ef2-bb06-5a63ea5c372d
-# ╠═3f48d345-1535-4568-becd-d8d79b3fa95c
-# ╠═df7c6179-7541-4b38-8317-1aeccbd04868
 # ╟─73d104ac-7aff-46cc-95b5-a67b6811f64d
 # ╟─9e9f07dd-edcb-471c-9fb4-613553e10353
 # ╟─1308d56a-f91a-4fe2-8f5d-7d7a15b8f040
@@ -3118,6 +3126,8 @@ version = "3.5.0+0"
 # ╠═5b9132b5-6638-413f-83f3-2bf1f2f9e3e6
 # ╠═8729cfca-e8f2-4eb8-adaf-301dc0d9f061
 # ╠═1f057543-d832-42e3-9d5d-32ba4c825e63
+# ╠═b97cff7f-26c4-4343-986c-193b5980e1c6
+# ╠═3098f82f-cd44-4fd8-92ae-6ee4550846fb
 # ╠═f1af8644-4daf-464f-aba1-b306541508bc
 # ╠═2d0c6a4f-f55d-41d2-89cf-501a97bcd89d
 # ╠═37b6ef7f-2b07-4189-a3fe-ae3ab1661eb9
