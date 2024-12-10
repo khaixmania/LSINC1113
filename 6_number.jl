@@ -285,6 +285,9 @@ md"""
 Comment calculer ``a^m`` pour un large ``m`` ?
 """
 
+# ╔═╡ 7881bb75-3ef9-496e-860b-03ced6b593c5
+@time big(2)^power
+
 # ╔═╡ a7d06375-e4dd-47b1-8aba-11dc4d62954b
 qa(md"Supposons que ``m`` est pair, c'est à dire ``m = 2k``...",
 md"""
@@ -312,6 +315,12 @@ function fast_power(prod_func::Function, a, power)
 	end
 end
 
+# ╔═╡ 9e8a61d9-a700-4851-b1cd-49ce042c3530
+@time big(2)^power
+
+# ╔═╡ 3c198d79-c46a-4781-8bd1-b6b68f06c31f
+@time fast_power(*, big(2), power)
+
 # ╔═╡ a4698418-ebf7-4992-a3ba-a15ff282bf87
 qa(md"Quelle est la complexité temporelle ?", md"Si ``n`` est impair, au coup suivant, il est pair donc il n'est impair qu'au pire une fois sur deux. En ``l`` multiplication, on divise ``m`` au moins par ``2^{l/2}`` donc on a une complexité logarithmique ``\Theta(\log(m))``  en supposant que `prod_func` a une complexité ``\Theta(1)``.")
 
@@ -324,8 +333,14 @@ fast_mod_power(a, power, n) = fast_power((a, b) -> mod(a * b, n), a, power)
 # ╔═╡ 1b2245f8-2f02-4c4d-b6d2-e65af1f2a21e
 md"Last 3 digit:"
 
+# ╔═╡ 77093b36-c232-4477-be49-845f1a631829
+@time pow_1000 = fast_mod_power(2, power, 1000)
+
 # ╔═╡ 9722971a-16f1-4f28-ba31-c12b673b8a30
 md"Et modulo 999 ?"
+
+# ╔═╡ 65f4990f-1952-4682-8fa8-9e3dd4bf1ebf
+@time pow_999 = fast_mod_power(2, power, 999)
 
 # ╔═╡ 6ed7c73d-60da-4908-85cb-958745d81ebc
 md"Par l'algo d'Euclide, ``\text{gcd}(n, n - 1) = 1`` donc ``\text{gcd}(1000, 999) = 1``."
@@ -340,6 +355,9 @@ On veut trouver ``x`` et ``y`` tels que
 On veut que ``x \equiv 0 \pmod{999}`` et ``x \equiv 1 \pmod{1000}``.
 On utilise donc ``x = 999x'`` avec ``x' \equiv (999)^{-1} \pmod{1000}``.
 ")
+
+# ╔═╡ 6f10de7b-ce05-4f82-82e7-4110be44e8cc
+mod(pow_1000 * 999 * modinv(999, 1000) + pow_999 * 1000 * modinv(1000, 999), 999000)
 
 # ╔═╡ c2fab245-8a98-4b41-ade2-c5b16e9c39f9
 frametitle("Chinese remainder theorem")
@@ -359,6 +377,9 @@ function chinese_remainder_theorem(r, n)
 		return mod(r[i] * mod(m * modinv(m, n[i]), prod_n), prod_n)
 	end, prod_n)
 end
+
+# ╔═╡ ec25ce2a-de8a-4b69-a3f3-b47cd58ec986
+chinese_remainder_theorem([pow_1000, pow_999], [1000, 999])
 
 # ╔═╡ 67093a35-8e1b-4cd3-b11b-c7ff601f802e
 md"`primes_upper` = $(@bind primes_upper Slider(50:300, default = 100, show_value = true))"
@@ -676,29 +697,8 @@ power_slider = @bind power Slider(1:10000, default = 256, show_value = true)
 # ╔═╡ c8f85081-3659-4796-8550-2e708b09c8d7
 md"`power` = $power_slider"
 
-# ╔═╡ 7881bb75-3ef9-496e-860b-03ced6b593c5
-@time big(2)^power
-
 # ╔═╡ 087cbe82-b42a-4f80-a1af-97f3aa93aeeb
 md"`power` = $power_slider"
-
-# ╔═╡ 9e8a61d9-a700-4851-b1cd-49ce042c3530
-@time big(2)^power
-
-# ╔═╡ 3c198d79-c46a-4781-8bd1-b6b68f06c31f
-@time fast_power(*, big(2), power)
-
-# ╔═╡ 77093b36-c232-4477-be49-845f1a631829
-@time pow_1000 = fast_mod_power(2, power, 1000)
-
-# ╔═╡ 65f4990f-1952-4682-8fa8-9e3dd4bf1ebf
-@time pow_999 = fast_mod_power(2, power, 999)
-
-# ╔═╡ 6f10de7b-ce05-4f82-82e7-4110be44e8cc
-mod(pow_1000 * 999 * modinv(999, 1000) + pow_999 * 1000 * modinv(1000, 999), 999000)
-
-# ╔═╡ ec25ce2a-de8a-4b69-a3f3-b47cd58ec986
-chinese_remainder_theorem([pow_1000, pow_999], [1000, 999])
 
 # ╔═╡ 9cef898e-192c-418a-bec6-511f8b6da179
 fast_mod_power(2, power, 999000)
