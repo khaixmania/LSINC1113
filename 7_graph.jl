@@ -255,6 +255,19 @@ end;
 # ╔═╡ 9eeaca05-9e6e-4881-85aa-d81ad5460e8c
 @time cached_fib(n)
 
+# ╔═╡ 039d5065-4ab2-4787-86e2-5612cfcd01b4
+function draw_fibo(n)
+	Luxor.@draw begin
+		Luxor.translate(0, -350)
+		Luxor.fontsize(30)
+    	Luxor.fontface("Alegreya Sans SC")
+		draw_fib(n, 1)
+	end 1200 800
+end
+
+# ╔═╡ d35df21e-2dd5-478f-b0c1-17cbd96a9cc6
+draw_fibo(8)
+
 # ╔═╡ 3c9dd530-8a25-4c1b-b1ff-3b5a3748b74a
 function random_weighted(n, k, weights)
 	g = random_regular_graph(n, k)
@@ -337,19 +350,6 @@ function draw_fib(n, depth)
 	end
 	return w
 end
-
-# ╔═╡ 039d5065-4ab2-4787-86e2-5612cfcd01b4
-function draw_fibo(n)
-	Luxor.@draw begin
-		Luxor.translate(0, -350)
-		Luxor.fontsize(30)
-    	Luxor.fontface("Alegreya Sans SC")
-		draw_fib(n, 1)
-	end 1200 800
-end
-
-# ╔═╡ d35df21e-2dd5-478f-b0c1-17cbd96a9cc6
-draw_fibo(8)
 
 # ╔═╡ 1b748b69-5262-46c9-aeff-01696c585e6f
 biblio = load_biblio!()
@@ -3096,14 +3096,14 @@ version = "3.5.0+0"
 # ╟─174b7c95-a9f7-4cfd-a679-8000a26b39c9
 # ╟─783532d8-910e-434d-bf59-0c8dc75cfef3
 # ╟─75bb5e30-76b8-486b-b3fa-9979aaf830a5
+# ╠═f83fdf0a-a2f5-4d72-9297-a409cf4e2bbb
+# ╠═accdf77c-fc4b-4777-bebf-9d69ebb36526
+# ╠═bd9ab2c4-b098-11ef-3c1e-7fe1458a8556
 # ╠═b01e3f5a-ad9f-4557-ba62-30e9c57b8532
 # ╠═fdd9318e-ee09-4eab-9322-ad97b03da002
 # ╠═039d5065-4ab2-4787-86e2-5612cfcd01b4
 # ╠═3c9dd530-8a25-4c1b-b1ff-3b5a3748b74a
-# ╠═f83fdf0a-a2f5-4d72-9297-a409cf4e2bbb
 # ╠═33ac9568-a83d-47b0-a17c-6e30df0dbaa4
-# ╠═accdf77c-fc4b-4777-bebf-9d69ebb36526
-# ╠═bd9ab2c4-b098-11ef-3c1e-7fe1458a8556
 # ╠═1b748b69-5262-46c9-aeff-01696c585e6f
 # ╠═d57a6a11-0387-4693-a50e-9eba62605a49
 # ╠═2fedb811-6f34-424f-a46b-806bb0c6b9c0
