@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.46
+# v0.20.0
 
 using Markdown
 using InteractiveUtils
@@ -48,60 +48,11 @@ md"#### Audio"
 # ╔═╡ 27d19b85-8f5b-4d53-93c2-033cca3b9006
 @bind la_clicked CounterButton("play la")
 
-# ╔═╡ 04ac4af9-5789-4d0a-a958-1630d0a54299
-let
-	la_clicked
-
-	échantillonnage = 2^13
-	Δt = 1 / échantillonnage
-	temps = range(Δt, stop=2, length=échantillonnage)
-	la = cispi.(2*440*temps)
-	
-	PortAudioStream(0, 2; samplerate=échantillonnage) do stream
-    	write(stream, real.(la))
-	end
-
-	nothing
-end
-
 # ╔═╡ 41333814-27a7-4ecf-99ce-4f972c0a37da
 @bind ré_clicked Button("play ré")
 
-# ╔═╡ 5d64d5ac-ff4f-415a-85bb-c673da00e9a1
-let
-	ré_clicked
-
-	échantillonnage = 2^13
-	Δt = 1 / échantillonnage
-	temps = range(Δt, stop=2, length=échantillonnage)
-	ré = cispi.(2*293.7*temps)
-	
-	PortAudioStream(0, 2; samplerate=échantillonnage) do stream
-    	write(stream, real.(ré))
-	end
-
-	nothing
-end
-
 # ╔═╡ 308757bd-bfbc-43d5-8e72-5903390c1458
 @bind la_ré_clicked Button("play la + ré")
-
-# ╔═╡ 93534f3d-f9da-46c4-a9c3-d055530f3045
-let
-	la_ré_clicked
-	
-	échantillonnage = 2^13
-	Δt = 1 / échantillonnage
-	temps = range(Δt, stop=2, length=échantillonnage)
-	la = cispi.(2*440*temps)
-	ré = cispi.(2*293.7*temps)
-	
-	PortAudioStream(0, 2; samplerate=échantillonnage) do stream
-    	write(stream, real.(la + ré))
-	end
-	
-	nothing
-end
 
 # ╔═╡ 8f77bda0-25b0-44fb-b235-afb6c2e725ce
 md"#### Signal temporel"
@@ -434,6 +385,54 @@ md"`max_N` = $(@bind max_N Slider(2 .^ (2:5), default=8, show_value = true))"
 # ╔═╡ 59130f1a-4fcd-4ae1-9ecf-1818dfc07612
 md"## Utilitaires"
 
+# ╔═╡ 1817a169-0afc-4fff-be23-1ea510ff337a
+function play_sound(sound, samplerate)
+	# For the static version, there is no sound so we just make the buttons
+	# do nothing
+	if PortAudio.Pa_GetDefaultOutputDevice() != PortAudio.LibPortAudio.paNoDevice
+		PortAudioStream(0, 2; samplerate) do stream
+    		write(stream, real.(sound))
+		end
+	end
+end
+
+# ╔═╡ 04ac4af9-5789-4d0a-a958-1630d0a54299
+let
+	la_clicked
+
+	échantillonnage = 2^13
+	Δt = 1 / échantillonnage
+	temps = range(Δt, stop=2, length=échantillonnage)
+	la = cispi.(2*440*temps)
+	play_sound(la, échantillonnage)
+	nothing
+end
+
+# ╔═╡ 5d64d5ac-ff4f-415a-85bb-c673da00e9a1
+let
+	ré_clicked
+
+	échantillonnage = 2^13
+	Δt = 1 / échantillonnage
+	temps = range(Δt, stop=2, length=échantillonnage)
+	ré = cispi.(2*293.7*temps)
+	play_sound(ré, échantillonnage)
+	nothing
+end
+
+# ╔═╡ 93534f3d-f9da-46c4-a9c3-d055530f3045
+let
+	la_ré_clicked
+	
+	échantillonnage = 2^13
+	Δt = 1 / échantillonnage
+	temps = range(Δt, stop=2, length=échantillonnage)
+	la = cispi.(2*440*temps)
+	ré = cispi.(2*293.7*temps)
+	play_sound(la + ré, échantillonnage)
+	nothing
+end
+
 # ╔═╡ 0f87464a-1a55-4f7c-8a88-bf514f5177a0
 begin
     struct Join
@@ -666,7 +665,7 @@ TestImages = "~1.8.0"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.11.0"
+julia_version = "1.11.2"
 manifest_format = "2.0"
 project_hash = "1c8ee317d5c0da1fee51733deb071ae456d78357"
 
@@ -2725,6 +2724,7 @@ version = "1.4.1+1"
 # ╠═583c3b75-71cf-48f6-b93d-2201c6c7d520
 # ╠═34c779d2-5a9d-4c98-ac28-e4be1a85da40
 # ╠═e3a7dd72-f106-4865-8b24-d86056782160
+# ╠═1817a169-0afc-4fff-be23-1ea510ff337a
 # ╠═0f87464a-1a55-4f7c-8a88-bf514f5177a0
 # ╠═9e6732a7-d2df-465f-a7fa-c119a64deb9a
 # ╠═0e9e8c6e-83ff-4c4c-b9d1-19a0593a3cba
