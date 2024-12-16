@@ -219,8 +219,107 @@ frametitle("Mémoïsation pour Puissance $mem_longueur")
 # ╔═╡ a436f564-8418-477c-9b0d-9d791c893bb1
 frametitle("Pièces de monnaie")
 
+# ╔═╡ 9db78023-e29c-41e5-9102-870692111f39
+frametitle("Depth-First Search (DFS)")
+
+# ╔═╡ 6dc95039-9e2a-47e0-8250-9c5ad8a2af0c
+function dfs!(path, g::DiGraph, current, target)
+	if current in path
+		return false
+	end
+	push!(path, current)
+	if current == target
+		return true
+	end
+	for next in Graphs.outneighbors(g, current)
+		if dfs!(path, g, next, target)
+			return true
+		end
+	end
+	pop!(path)
+	return false
+end
+
+# ╔═╡ 2829213a-8533-4e92-a130-57d53166b376
+function dfs(g, current, target)
+	path = Int[]
+	dfs!(path, g, current, target)
+	return path
+end
+
+# ╔═╡ 2c7c9b52-0d27-4dc8-ae69-29a6edc87041
+frametitle("Breadth-First Search (BFS)")
+
+# ╔═╡ fb29e166-b361-49e3-bc5c-042d409023f1
+function bfs(g::DiGraph, source)
+	dist = fill(-1, nv(g))
+	queue = Queue{Tuple{Int,Int}}()
+	dist[source] = 0
+	enqueue!(queue, (source, 0))
+	while !isempty(queue)
+		current, d = dequeue!(queue)
+		for next in outneighbors(g, current)
+			if dist[next] == -1
+				dist[next] = d + 1
+				enqueue!(queue, (next, d + 1))
+			end
+		end
+	end
+	return dist
+end
+
+# ╔═╡ 670aaab7-a101-4dea-ba97-80f1a5346122
+frametitle("Dijkstra")
+
+# ╔═╡ ab3997f3-83ef-4435-bb90-7cef1c7bcdcf
+function dijkstra(g::SimpleWeightedGraph, source)
+	dist = fill(-1, nv(g))
+	dist[source] = 0
+	queue = PriorityQueue{Int,Int}()
+	push!(queue, source => 0)
+	while !isempty(queue)
+		current = dequeue!(queue)
+		for next in outneighbors(g, current)
+			d = dist[current] + g[current, next, Val(:weight)]
+			if dist[next] == -1
+				dist[next] = d
+				enqueue!(queue, next => d)
+			elseif d < dist[next]
+				dist[next] = d
+				queue[next] = d
+			end
+		end
+	end
+	return dist
+end
+
+# ╔═╡ 634dea01-3832-49e7-90af-4e1b834cead7
+frametitle("Max Flow / Min Cut")
+
 # ╔═╡ 75bb5e30-76b8-486b-b3fa-9979aaf830a5
 section("Utils")
+
+# ╔═╡ accdf77c-fc4b-4777-bebf-9d69ebb36526
+import DocumenterCitations, Polyhedra, Makie, WGLMakie, StaticArrays, Bonito, Luxor, Formatting, Random
+
+# ╔═╡ 730e5e09-e818-49c5-8fa1-495b39b4267e
+let
+	Random.seed!(32)
+	g = random_regular_digraph(32, 2)
+	c = Set.(strongly_connected_components(g))
+	cols = distinguishable_colors(length(c))
+	tree = Set(spanning_forest(g))
+	gplot(g, nodefillc = [cols[findfirst(comp -> v in comp, c)] for v in vertices(g)])
+end
+
+# ╔═╡ c7663ad1-16b4-4b29-8f4a-8993d094a7e1
+let
+	Random.seed!(32)
+	n = 32
+	g = random_regular_digraph(n, 2)
+	dist = bfs(g, 1)
+	gplot(g, nodelabel = string.(dist))
+end
 
 # ╔═╡ b01e3f5a-ad9f-4557-ba62-30e9c57b8532
 begin
@@ -249,70 +348,14 @@ called = let
 	called
 end;
 
+# ╔═╡ 46977b09-a43a-427c-8974-a1fd5f2d7da2
+Makie.barplot(1:n, called)
+
 # ╔═╡ 4c76167b-a8ac-436f-87a8-d493d489e61f
 @time fib_bottom_up(n)
 
 # ╔═╡ 9eeaca05-9e6e-4881-85aa-d81ad5460e8c
 @time cached_fib(n)
-
-# ╔═╡ 039d5065-4ab2-4787-86e2-5612cfcd01b4
-function draw_fibo(n)
-	Luxor.@draw begin
-		Luxor.translate(0, -350)
-		Luxor.fontsize(30)
-    	Luxor.fontface("Alegreya Sans SC")
-		draw_fib(n, 1)
-	end 1200 800
-end
-
-# ╔═╡ d35df21e-2dd5-478f-b0c1-17cbd96a9cc6
-draw_fibo(8)
-
-# ╔═╡ 3c9dd530-8a25-4c1b-b1ff-3b5a3748b74a
-function random_weighted(n, k, weights)
-	g = random_regular_graph(n, k)
-	wg = SimpleWeightedGraph(n)
-	for e in edges(g)
-		add_edge!(wg, src(e), dst(e), rand(weights))
-	end
-	return wg
-end
-
-# ╔═╡ 33ac9568-a83d-47b0-a17c-6e30df0dbaa4
-colors = Colors.JULIA_LOGO_COLORS
-
-# ╔═╡ d1329a48-5bed-428f-8554-854a5d51488e
-let
-	g = random_regular_graph(10, 5)
-	cols = [colors.red, colors.green]
-	tree = Set(spanning_forest(g))
-	gplot(g, edgestrokec = [cols[(edge in tree) + 1] for edge in edges(g)], nodefillc = colors.blue)
-end
-
-# ╔═╡ accdf77c-fc4b-4777-bebf-9d69ebb36526
-import DocumenterCitations, Polyhedra, Makie, WGLMakie, StaticArrays, Bonito, Luxor, Formatting, Random
-
-# ╔═╡ ecf6a7d0-3279-4bff-b0f4-73327f60b702
-let
-	Random.seed!(0)
-	g = random_weighted(10, 3, 1:9)
-	cols = [colors.red, colors.green]
-	tree = Set(kruskal(g))
-	gplot(g, edgelabel=string.(Int.(weight.(edges(g)))), edgestrokec = [cols[(edge in tree) + 1] for edge in edges(g)], nodefillc = colors.blue)
-end
-
-# ╔═╡ 730e5e09-e818-49c5-8fa1-495b39b4267e
-let
-	Random.seed!(32)
-	g = random_regular_digraph(32, 2)
-	c = Set.(strongly_connected_components(g))
-	cols = distinguishable_colors(length(c))
-	tree = Set(spanning_forest(g))
-	gplot(g, nodefillc = [cols[findfirst(comp -> v in comp, c)] for v in vertices(g)])
-end
-
-# ╔═╡ 46977b09-a43a-427c-8974-a1fd5f2d7da2
-Makie.barplot(1:n, called)
 
 # ╔═╡ fdd9318e-ee09-4eab-9322-ad97b03da002
 function draw_fib(n, depth)
@@ -349,6 +392,72 @@ function draw_fib(n, depth)
 		cur += dw
 	end
 	return w
+end
+
+# ╔═╡ 039d5065-4ab2-4787-86e2-5612cfcd01b4
+function draw_fibo(n)
+	Luxor.@draw begin
+		Luxor.translate(0, -350)
+		Luxor.fontsize(30)
+    	Luxor.fontface("Alegreya Sans SC")
+		draw_fib(n, 1)
+	end 1200 800
+end
+
+# ╔═╡ d35df21e-2dd5-478f-b0c1-17cbd96a9cc6
+draw_fibo(8)
+
+# ╔═╡ 3c9dd530-8a25-4c1b-b1ff-3b5a3748b74a
+function random_weighted(n, k, weights)
+	g = random_regular_graph(n, k)
+	wg = SimpleWeightedGraph(n)
+	for e in edges(g)
+		add_edge!(wg, src(e), dst(e), rand(weights))
+	end
+	return wg
+end
+
+# ╔═╡ 0ee692b3-fcf6-418a-b3ba-39febcf6eed2
+let
+	Random.seed!(0)
+	g = random_weighted(10, 3, 1:9)
+	dist = dijkstra(g, 1)
+	gplot(g, nodelabel=string.(dist), edgelabel=string.(Int.(weight.(edges(g)))))
+end
+
+# ╔═╡ 33ac9568-a83d-47b0-a17c-6e30df0dbaa4
+colors = Colors.JULIA_LOGO_COLORS
+
+# ╔═╡ d1329a48-5bed-428f-8554-854a5d51488e
+let
+	g = random_regular_graph(10, 5)
+	cols = [colors.red, colors.green]
+	tree = Set(spanning_forest(g))
+	gplot(g, edgestrokec = [cols[(edge in tree) + 1] for edge in edges(g)], nodefillc = colors.blue)
+end
+
+# ╔═╡ ecf6a7d0-3279-4bff-b0f4-73327f60b702
+let
+	Random.seed!(0)
+	g = random_weighted(10, 3, 1:9)
+	cols = [colors.red, colors.green]
+	tree = Set(kruskal(g))
+	gplot(g, edgelabel=string.(Int.(weight.(edges(g)))), edgestrokec = [cols[(edge in tree) + 1] for edge in edges(g)], nodefillc = colors.blue)
+end
+
+# ╔═╡ b54d9e8b-83ab-434e-9e6c-f6774558abad
+function plot_path(g, path)
+	cols = [colors.red, colors.green]
+	gplot(g, nodefillc = [cols[v in path ? 1 : 2] for v in vertices(g)], nodelabel = [something(findfirst(isequal(v), path), "") for v in vertices(g)])
+end
+
+# ╔═╡ f8d160f8-7e41-4bdf-99f4-d28b344a46a4
+let
+	Random.seed!(32)
+	n = 32
+	g = random_regular_digraph(n, 2)
+	path = dfs(g, 1, n)
+	plot_path(g, path)
 end
 
 # ╔═╡ 1b748b69-5262-46c9-aeff-01696c585e6f
@@ -732,6 +841,38 @@ md"""
 y_{n, 10} = y_{n - 10, 5} + y_{n - 20, 5} + ... + y_{n - 5, 2} + y_{n - 10, 2} + ...
 ```
 Modifier l'implémentation pour utiliser cette formule. Est-ce plus rapide ? Pourquoi ?
+"""
+
+# ╔═╡ d8d21aa6-36b8-4498-82e5-5fcbbd9dbe46
+qa(md"Quelle est la complexité de cet algorithme ?", md"???")
+
+# ╔═╡ 46192b0c-e856-4e96-94bc-d691d201b391
+qa(md"Trouve-t-il le plus court chemin ?", md"Non, l'algorithme DFS a d'autres utilité comme le calcul de composantes fortement connexes ou tri topologique mais pas le calcul de plus court chemin. Un exception est le calcul de plus cours chemin dans un DAG. On peut alors le calculer en top-down avec memoïsation ce qui ressemble à un DFS.")
+
+# ╔═╡ 03986809-5a0d-4029-af2c-55eaf68ff5e2
+md"L'algorithme BFS résoud le problème de shortest path dans un graphe dirigé dont tous les poids sont 1."
+
+# ╔═╡ 18e81794-8275-4f90-a18a-8052aaf34bc6
+qa(md"Quelle est la complexité de l'algorithme BFS ?", md"???")
+
+# ╔═╡ 2b1634c2-71fd-4fc3-afda-04721bef791d
+md"L'algorithme de Dijkstra résoud le problème de shortest path dans un graph dirigé quand tous les poids sont positifs."
+
+# ╔═╡ f34ffdae-4c4f-4358-9b7d-4125e82e781d
+qa(md"Quelle est la complexité de l'algorithme Dijkstra ?", md"???")
+
+# ╔═╡ e37ed884-1fd7-4fbe-ac7f-9931d595b3d3
+qa(md"Un fois qu'un noeud `v` est retourné par `dequeue!`, peut-il encore satisfaire `d < dist[next]` pour `v == next` par la suite ?", md"Non, les noeuds suivant retournés par `dequeue!` auront une valeur dans `dist` plus élevée donc `d` sera encore plus élevé donc on aura `d > d[v]` durant le reste de l'algorithme.")
+
+# ╔═╡ 61dc575d-44cb-4afb-be2b-c9a1c15e86de
+qa(md"Que se peut-il se passer si une des arêtes a un poids négatif ?", md"L'algorithme peut ne jamais terminer... Il faut alors utiliser l'algorithme de Bellman-Ford (qui ne fait pas partie du cours 😢)")
+
+# ╔═╡ 0d96847c-6ff2-4811-baec-50705344ce0e
+md"""
+* Le problème de Max Flow détermine le flot le plus important d'un noeud source à un noeud target étant donné une capacité maximale de chaque arête.
+* Le problème de Min Cut détermine la somme des capacité minimale d'une coupe du graphe séparant la source de la target.
+
+**Théorème** Pour tout graphe, le flot maximal est égal à la cut minimale !
 """
 
 # ╔═╡ f0ba7d64-a360-450b-a9bb-ee6d5751e9ec
@@ -3095,6 +3236,27 @@ version = "3.5.0+0"
 # ╟─f4562517-53ec-429c-a398-3f146a82df22
 # ╟─174b7c95-a9f7-4cfd-a679-8000a26b39c9
 # ╟─783532d8-910e-434d-bf59-0c8dc75cfef3
+# ╟─9db78023-e29c-41e5-9102-870692111f39
+# ╠═6dc95039-9e2a-47e0-8250-9c5ad8a2af0c
+# ╠═2829213a-8533-4e92-a130-57d53166b376
+# ╠═f8d160f8-7e41-4bdf-99f4-d28b344a46a4
+# ╠═b54d9e8b-83ab-434e-9e6c-f6774558abad
+# ╟─d8d21aa6-36b8-4498-82e5-5fcbbd9dbe46
+# ╟─46192b0c-e856-4e96-94bc-d691d201b391
+# ╟─2c7c9b52-0d27-4dc8-ae69-29a6edc87041
+# ╟─03986809-5a0d-4029-af2c-55eaf68ff5e2
+# ╠═fb29e166-b361-49e3-bc5c-042d409023f1
+# ╠═c7663ad1-16b4-4b29-8f4a-8993d094a7e1
+# ╟─18e81794-8275-4f90-a18a-8052aaf34bc6
+# ╟─670aaab7-a101-4dea-ba97-80f1a5346122
+# ╟─2b1634c2-71fd-4fc3-afda-04721bef791d
+# ╠═ab3997f3-83ef-4435-bb90-7cef1c7bcdcf
+# ╠═0ee692b3-fcf6-418a-b3ba-39febcf6eed2
+# ╟─f34ffdae-4c4f-4358-9b7d-4125e82e781d
+# ╟─e37ed884-1fd7-4fbe-ac7f-9931d595b3d3
+# ╟─61dc575d-44cb-4afb-be2b-c9a1c15e86de
+# ╟─634dea01-3832-49e7-90af-4e1b834cead7
+# ╟─0d96847c-6ff2-4811-baec-50705344ce0e
 # ╟─75bb5e30-76b8-486b-b3fa-9979aaf830a5
 # ╠═f83fdf0a-a2f5-4d72-9297-a409cf4e2bbb
 # ╠═accdf77c-fc4b-4777-bebf-9d69ebb36526
