@@ -749,7 +749,7 @@ J_{1,n} = J_{k+1,n} J_{1,k} \qquad \Omega(d_nd_kd_0)
 ```
 we have a complexity of
 ```math
-\Omega(d_nd_kd_0 + \sum_{i=1}^{k-1} d_kd_id_{i-1} + \sum_{i=k}^{n} d_id_{i-1}d_k).
+\Omega(d_nd_kd_0 + \sum_{i=1}^{k-1} d_kd_id_{i-1} + \sum_{i=k+2}^{n} d_id_{i-1}d_k).
 ```
 
 #### Comparison
